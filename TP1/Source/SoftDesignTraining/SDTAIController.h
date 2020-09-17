@@ -26,11 +26,14 @@ public:
     float _scale;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     FVector _direction;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    float _collisionDistance;
 
 
     virtual void Tick(float deltaTime) override;
     void SetSpeedVector(FVector dir);
     void Accelerate();
+    void LookForWall(FVector dir);
     bool ChangedDirection(FVector currentDir, FVector newDir);
     PhysicsHelpers GetPhysicsHelpers();
 };

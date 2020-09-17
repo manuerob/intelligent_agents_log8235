@@ -8,6 +8,7 @@ void ASDTAIController::Tick(float deltaTime) {
 
     Accelerate();
     SetSpeedVector(FVector(1.0f, 0.0f, 0.0f));
+    LookForWall(FVector(1.0f, 0.0f, 0.0f));
 }
 
 void ASDTAIController::Accelerate() {
@@ -22,6 +23,24 @@ void ASDTAIController::SetSpeedVector(FVector dir) {
     if (pawn) {
         pawn->AddMovementInput(dir.GetSafeNormal(), _scale);
     }
+}
+
+void ASDTAIController::LookForWall(FVector dir) {
+    
+    PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
+    APawn* const pawn = GetPawn();
+
+    FVector pawnPosition(GetPawn()->GetActorLocation());
+    FVector rayCastEnd = pawnPosition + dir * _collisionDistance;
+
+    TArray<struct FHitResult> hitResult;
+
+    physicsHelpers.CastRay(pawnPosition, rayCastEnd, hitResult, false);
+    
+    if (hitResult.Num() > 0) {
+        UE_LOG(LogTemp, Log, TEXT("WALL DETECTED"));
+    }
+
 }
 
 bool ASDTAIController::ChangedDirection(FVector currentDir, FVector newDir) {
