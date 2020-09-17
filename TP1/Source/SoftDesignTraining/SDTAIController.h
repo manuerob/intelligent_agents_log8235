@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "PhysicsHelpers.h"
 
 #include "SDTAIController.generated.h"
 
@@ -31,4 +32,5 @@ public:
     void SetSpeedVector(FVector dir);
     void Accelerate();
     bool ChangedDirection(FVector currentDir, FVector newDir);
+    PhysicsHelpers GetPhysicsHelpers();
 };

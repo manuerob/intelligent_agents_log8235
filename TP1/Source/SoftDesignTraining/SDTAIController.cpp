@@ -3,7 +3,9 @@
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
 
+
 void ASDTAIController::Tick(float deltaTime) {
+
     Accelerate();
     SetSpeedVector(FVector(1.0f, 0.0f, 0.0f));
 }
@@ -24,4 +26,9 @@ void ASDTAIController::SetSpeedVector(FVector dir) {
 
 bool ASDTAIController::ChangedDirection(FVector currentDir, FVector newDir) {
     return currentDir.GetSafeNormal().Equals(newDir.GetSafeNormal());
+}
+
+PhysicsHelpers ASDTAIController::GetPhysicsHelpers() {
+    UWorld* world = GetWorld();
+    return PhysicsHelpers(world);
 }
