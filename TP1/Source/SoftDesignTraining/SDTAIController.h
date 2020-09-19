@@ -17,11 +17,12 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
 
 private:
     const float REVERSE_DIR = -1.0;
-    float _speed;
+    float _speed = 0.0f;
+    float _time = 0.0f;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float _acceleration;
+    float _a = 0.1;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _maxSpeed = 1.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
@@ -29,7 +30,7 @@ public:
 
     virtual void Tick(float deltaTime) override;
 
-    void Accelerate(APawn* pawn);
+    void CalculateSpeed(APawn* pawn);
     void SetSpeedVector(APawn* pawn, FVector dir);
 
     FVector GetNextDirection(APawn* pawn, UWorld* world);

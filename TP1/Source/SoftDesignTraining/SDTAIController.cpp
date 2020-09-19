@@ -8,19 +8,25 @@ void ASDTAIController::Tick(float deltaTime) {
     UWorld* const world = GetWorld();
     FVector currentPawnPos = pawn->GetActorLocation();
 
+    _time += deltaTime;
+
     if (RayCast(pawn, world, currentPawnPos, currentPawnPos + _detectionDistance * pawn->GetActorForwardVector())) {
         RotatePawn(pawn, GetRotatorFromDirection(pawn, GetNextDirection(pawn, world)));
-        _speed = 0.2;
+        _speed /= 2;
+        _time = _speed / _a;
     }
-    Accelerate(pawn);
+    CalculateSpeed(pawn);
     SetSpeedVector(pawn, pawn->GetActorForwardVector());
-
 }
 
-void ASDTAIController::Accelerate(APawn* pawn) {
-    if (_speed < _maxSpeed) {
-        _speed += _acceleration;
+void ASDTAIController::CalculateSpeed(APawn* pawn) {
+    _speed = _time * _a;
+
+    if (_speed > _maxSpeed) {
+        _speed = _maxSpeed;
     }
+    UE_LOG(LogTemp, Log, TEXT(" %f, %f, %f, %f, %f"), _speed, _a, _maxSpeed, _detectionDistance, _time);
+
 }
 
 void ASDTAIController::SetSpeedVector(APawn* pawn, FVector dir) {
