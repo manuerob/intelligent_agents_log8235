@@ -16,19 +16,25 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
     GENERATED_BODY()
 
 private:
-    float const _maxScale = 1.0f;
+    const float REVERSE_DIR = -1.0;
+    float _speed;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _acceleration;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float _scale;
+    float _maxSpeed = 1.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    FVector _direction;
-
+    float _detectionDistance = 200.0f;
 
     virtual void Tick(float deltaTime) override;
-    void SetSpeedVector(FVector dir);
-    void Accelerate();
-    bool ChangedDirection(FVector currentDir, FVector newDir);
+
+    void Accelerate(APawn* pawn);
+    void SetSpeedVector(APawn* pawn, FVector dir);
+
+    FVector GetNextDirection(APawn* pawn, UWorld* world);
+    void RotatePawn(APawn* pawn, FRotator rotation);
+    FRotator GetRotatorFromDirection(APawn* pawn, FVector newDir);
+
+    bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
 };
