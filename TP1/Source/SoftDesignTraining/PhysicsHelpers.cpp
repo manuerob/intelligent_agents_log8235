@@ -98,7 +98,7 @@ bool PhysicsHelpers::SphereCast(const FVector& start, const FVector& end, float 
 
     return outHits.Num() > 0;
 }
-bool PhysicsHelpers::SphereOverlap(const FVector& pos, float radius, TArray<struct FOverlapResult>& outOverlaps, bool drawDebug)
+bool PhysicsHelpers::SphereOverlap(const FVector& pos, float radius, TArray<struct FOverlapResult>& outOverlaps, bool drawDebug, ECollisionChannel collisionChannel)
 {
     if (m_world == nullptr)
         return false;
@@ -112,8 +112,10 @@ bool PhysicsHelpers::SphereOverlap(const FVector& pos, float radius, TArray<stru
     collisionShape.SetSphere(radius);
     FCollisionQueryParams queryParams = FCollisionQueryParams::DefaultQueryParam;
     queryParams.bReturnPhysicalMaterial = true;
-
-    objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
+	
+	if (collisionChannel) {
+		objectQueryParams.AddObjectTypesToQuery(collisionChannel);
+	}
 
     m_world->OverlapMultiByObjectType(outOverlaps, pos, FQuat::Identity, objectQueryParams, collisionShape, queryParams);
 

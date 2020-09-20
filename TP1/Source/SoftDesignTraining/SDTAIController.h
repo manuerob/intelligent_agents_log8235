@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "PhysicsHelpers.h"
+#include "SDTUtils.h"
 
 #include "SDTAIController.generated.h"
 
@@ -20,6 +21,9 @@ private:
     const float REVERSE_DIR = -1.0;
     float _speed = 0.0f;
     float _time = 0.0f;
+	float _visionAngle = PI / 3.0f;
+	enum PawnState { WANDERING, PICKING_POWERUP, CHASING };
+	PawnState _currentState = WANDERING;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
@@ -31,6 +35,8 @@ public:
 
     virtual void Tick(float deltaTime) override;
 
+	void Wandering(float deltaTime, APawn* pawn, UWorld* world);
+
     void CalculateSpeed(APawn* pawn);
     void SetSpeedVector(APawn* pawn, FVector dir);
 
@@ -39,8 +45,11 @@ public:
     FRotator GetRotatorFromDirection(APawn* pawn, FVector newDir);
 
     void LocateObjects(APawn* pawn, UWorld* world);
+	bool LocateDeathTrap(APawn* pawn, UWorld* world);
 
     PhysicsHelpers GetPhysicsHelpers();
+
+	bool IsInsideCone(APawn * pawn, AActor * targetActor) const;
 
     bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
 };
