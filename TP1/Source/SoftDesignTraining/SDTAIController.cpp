@@ -17,6 +17,8 @@ void ASDTAIController::Tick(float deltaTime) {
     }
     CalculateSpeed(pawn);
     SetSpeedVector(pawn, pawn->GetActorForwardVector());
+
+    LocateObjects(pawn, world);
 }
 
 void ASDTAIController::CalculateSpeed(APawn* pawn) {
@@ -67,4 +69,29 @@ FRotator ASDTAIController::GetRotatorFromDirection(APawn* pawn, FVector newDir) 
 bool ASDTAIController::RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end) {
     FHitResult hit;
     return world->LineTraceSingleByObjectType(hit, start, end, FCollisionObjectQueryParams().AllStaticObjects);
+}
+
+void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world) {
+    
+    PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
+
+    FHitResult outResult;
+
+    FCollisionObjectQueryParams objectQueryParams; // All objects
+
+    objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
+
+    bool isDeathTrapFound = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 100.0f, objectQueryParams);
+
+    if (isDeathTrapFound){
+        RotatePawn(pawn,GetRotatorFromDirection(pawn, - pawn->GetActorForwardVector()));
+    }
+    
+    //physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 750.0f, 1000.0f, outResults, true);
+
+}
+
+PhysicsHelpers ASDTAIController::GetPhysicsHelpers() {
+    UWorld* world = GetWorld();
+    return PhysicsHelpers(world);
 }

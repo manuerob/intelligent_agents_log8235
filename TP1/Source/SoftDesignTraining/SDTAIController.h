@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "PhysicsHelpers.h"
 
 #include "SDTAIController.generated.h"
 
@@ -36,6 +37,10 @@ public:
     FVector GetNextDirection(APawn* pawn, UWorld* world);
     void RotatePawn(APawn* pawn, FRotator rotation);
     FRotator GetRotatorFromDirection(APawn* pawn, FVector newDir);
+
+    void LocateObjects(APawn* pawn, UWorld* world);
+
+    PhysicsHelpers GetPhysicsHelpers();
 
     bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
 };
