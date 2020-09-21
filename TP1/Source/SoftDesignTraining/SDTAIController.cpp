@@ -104,13 +104,26 @@ void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world) {
 		{
 			//_currentState = PICKING_POWERUP;
 			FHitResult hit;
+			AActor* actor = outResult.GetActor();
 
 			FCollisionObjectQueryParams coqp = FCollisionObjectQueryParams();
 			coqp.AddObjectTypesToQuery(COLLISION_COLLECTIBLE);
 			coqp.AddObjectTypesToQuery(ECollisionChannel::ECC_WorldStatic);
 
-			if(world->LineTraceSingleByObjectType(hit, pawn->GetActorLocation(), outResult.GetActor()->GetActorLocation(), coqp))
-				UE_LOG(LogTemp, Log, TEXT("%s"), *hit.GetActor()->GetName());
+			if (world->LineTraceSingleByObjectType(hit, pawn->GetActorLocation(), actor->GetActorLocation(), coqp))
+			{
+				if (hit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE) 
+				{
+					ASDTCollectible* collectible = static_cast<ASDTCollectible*>(hit.GetActor());
+					if (!collectible->IsOnCooldown())
+					{
+						UE_LOG(LogTemp, Log, TEXT("%f"), hit.GetActor()->GetActorLocation().X);
+						UE_LOG(LogTemp, Log, TEXT("%f"), hit.GetActor()->GetActorLocation().Y);
+						_currentState = PICKING_POWERUP;
+						_powerUp = collectible;
+					}
+				}
+			}
 		}
 
 	}
@@ -122,14 +135,23 @@ void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world
 
 	_time += deltaTime;
 
-	if (RayCast(pawn, world, currentPawnPos, _powerUpLocation)) {
-		RotatePawn(pawn, GetRotatorFromDirection(pawn, GetNextDirection(pawn, world)));
-		_speed /= 2;
-		_time = _speed / _a;
+	FHitResult hit;
+
+	FCollisionObjectQueryParams coqp = FCollisionObjectQueryParams();
+	coqp.AddObjectTypesToQuery(COLLISION_COLLECTIBLE);
+
+	if (world->LineTraceSingleByObjectType(hit, currentPawnPos, _powerUp->GetActorLocation(), coqp)) {
+		UE_LOG(LogTemp, Log, TEXT("%s"), *_powerUp->GetActorLocation().ToString());
+		RotatePawn(pawn, GetRotatorFromDirection(pawn, (_powerUp->GetActorLocation() - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f)));
+		//_speed /= 2;
+		//_time = _speed / _a;
 	}
 	CalculateSpeed(pawn);
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
-	
+
+	if (_powerUp->IsOnCooldown()) {
+		_currentState = WANDERING;
+	}
 }
 
 bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world) {

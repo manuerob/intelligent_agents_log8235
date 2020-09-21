@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "PhysicsHelpers.h"
+#include "SDTCollectible.h"
 #include "SDTUtils.h"
 
 #include "SDTAIController.generated.h"
@@ -24,7 +25,7 @@ private:
 	float _visionAngle = PI / 3.0f;
 	enum PawnState { WANDERING, PICKING_POWERUP, CHASING };
 	PawnState _currentState = WANDERING;
-    FVector _powerUpLocation;
+    ASDTCollectible* _powerUp;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
