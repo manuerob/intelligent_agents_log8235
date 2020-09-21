@@ -44,8 +44,6 @@ void ASDTAIController::CalculateSpeed(APawn* pawn) {
     if (_speed > _maxSpeed) {
         _speed = _maxSpeed;
     }
-    //UE_LOG(LogTemp, Log, TEXT(" %f, %f, %f, %f, %f"), _speed, _a, _maxSpeed, _detectionDistance, _time);
-
 }
 
 void ASDTAIController::SetSpeedVector(APawn* pawn, FVector dir) {
@@ -102,7 +100,6 @@ void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world) {
 	{
 		if (IsInsideCone(GetPawn(), outResult.GetActor()))
 		{
-			//_currentState = PICKING_POWERUP;
 			FHitResult hit;
 			AActor* actor = outResult.GetActor();
 
@@ -117,8 +114,6 @@ void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world) {
 					ASDTCollectible* collectible = static_cast<ASDTCollectible*>(hit.GetActor());
 					if (!collectible->IsOnCooldown())
 					{
-						UE_LOG(LogTemp, Log, TEXT("%f"), hit.GetActor()->GetActorLocation().X);
-						UE_LOG(LogTemp, Log, TEXT("%f"), hit.GetActor()->GetActorLocation().Y);
 						_currentState = PICKING_POWERUP;
 						_powerUp = collectible;
 					}
@@ -140,18 +135,30 @@ void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world
 	FCollisionObjectQueryParams coqp = FCollisionObjectQueryParams();
 	coqp.AddObjectTypesToQuery(COLLISION_COLLECTIBLE);
 
+	FVector toTarget = (_powerUp->GetActorLocation() - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
+
 	if (world->LineTraceSingleByObjectType(hit, currentPawnPos, _powerUp->GetActorLocation(), coqp)) {
-		UE_LOG(LogTemp, Log, TEXT("%s"), *_powerUp->GetActorLocation().ToString());
-		RotatePawn(pawn, GetRotatorFromDirection(pawn, (_powerUp->GetActorLocation() - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f)));
+		RotatePawn(pawn, GetRotatorFromDirection(pawn, toTarget));
 		//_speed /= 2;
 		//_time = _speed / _a;
 	}
 	CalculateSpeed(pawn);
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
+	
+	if (toTarget.Size() < (FMath::Min(_maxSpeed, _speed) * deltaTime * pawn->GetVelocity()).Size()) {
+		UE_LOG(LogTemp, Log, TEXT("GOT THIS THING"));
+	}
 
 	if (_powerUp->IsOnCooldown()) {
+		UE_LOG(LogTemp, Log, TEXT("%f"), toTarget.Size());
+		UE_LOG(LogTemp, Log, TEXT("%f"), (FMath::Min(_maxSpeed, _speed) * deltaTime * pawn->GetVelocity()).Size());
 		_currentState = WANDERING;
 	}
+
+	if (LocateDeathTrap(pawn, world)) {
+		_currentState = WANDERING;
+	}
+	
 }
 
 bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world) {
@@ -164,8 +171,6 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world) {
 	objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
 
 	bool isDeathTrapFound = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 100.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
-
-	//UE_LOG(LogTemp, Log, TEXT("%d"), isDeathTrapFound);
 
 	if (isDeathTrapFound) {
 		RotatePawn(pawn, GetRotatorFromDirection(pawn, -pawn->GetActorForwardVector()));
