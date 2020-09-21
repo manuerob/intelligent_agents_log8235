@@ -13,6 +13,7 @@ void ASDTAIController::Tick(float deltaTime) {
 			LocateObjects(pawn, world);
 			break;
 		case PICKING_POWERUP:
+			PickUpPowerUp(deltaTime, pawn, world);
 			break;
 		case CHASING:
 			break;
@@ -103,11 +104,32 @@ void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world) {
 		{
 			//_currentState = PICKING_POWERUP;
 			FHitResult hit;
-			if(world->LineTraceSingleByObjectType(hit, pawn->GetActorLocation(), outResult.GetActor()->GetActorLocation(), FCollisionObjectQueryParams().AllStaticObjects))
+
+			FCollisionObjectQueryParams coqp = FCollisionObjectQueryParams();
+			coqp.AddObjectTypesToQuery(COLLISION_COLLECTIBLE);
+			coqp.AddObjectTypesToQuery(ECollisionChannel::ECC_WorldStatic);
+
+			if(world->LineTraceSingleByObjectType(hit, pawn->GetActorLocation(), outResult.GetActor()->GetActorLocation(), coqp))
 				UE_LOG(LogTemp, Log, TEXT("%s"), *hit.GetActor()->GetName());
 		}
 
 	}
+}
+
+void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world) {
+
+	FVector currentPawnPos = pawn->GetActorLocation();
+
+	_time += deltaTime;
+
+	if (RayCast(pawn, world, currentPawnPos, _powerUpLocation)) {
+		RotatePawn(pawn, GetRotatorFromDirection(pawn, GetNextDirection(pawn, world)));
+		_speed /= 2;
+		_time = _speed / _a;
+	}
+	CalculateSpeed(pawn);
+	SetSpeedVector(pawn, pawn->GetActorForwardVector());
+	
 }
 
 bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world) {

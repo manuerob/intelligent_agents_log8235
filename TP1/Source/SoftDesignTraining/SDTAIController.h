@@ -24,6 +24,7 @@ private:
 	float _visionAngle = PI / 3.0f;
 	enum PawnState { WANDERING, PICKING_POWERUP, CHASING };
 	PawnState _currentState = WANDERING;
+    FVector _powerUpLocation;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
@@ -46,6 +47,7 @@ public:
 
     void LocateObjects(APawn* pawn, UWorld* world);
 	bool LocateDeathTrap(APawn* pawn, UWorld* world);
+    void PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world);
 
     PhysicsHelpers GetPhysicsHelpers();
 
