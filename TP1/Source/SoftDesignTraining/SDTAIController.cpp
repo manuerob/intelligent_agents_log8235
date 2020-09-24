@@ -144,21 +144,45 @@ void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world
 	}
 	CalculateSpeed(pawn);
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
+
+	TArray<AActor*> overlappingActors;
+
+	pawn->GetOverlappingActors(overlappingActors);
 	
-	if (toTarget.Size() < (FMath::Min(_maxSpeed, _speed) * deltaTime * pawn->GetVelocity()).Size()) {
+	/*if (std::abs(((_powerUp->GetActorLocation()-pawn->GetActorLocation()) * FVector(1.f, 1.f, 0.f)).Size()) < 91.f) {
 		UE_LOG(LogTemp, Log, TEXT("GOT THIS THING"));
-	}
+	}*/
+		
 
 	if (_powerUp->IsOnCooldown()) {
-		UE_LOG(LogTemp, Log, TEXT("%f"), toTarget.Size());
-		UE_LOG(LogTemp, Log, TEXT("%f"), (FMath::Min(_maxSpeed, _speed) * deltaTime * pawn->GetVelocity()).Size());
+		
+		for (AActor* actor : overlappingActors) {
+			USceneComponent* scene = actor->GetRootComponent();
+			//UPrimitiveComponent primComp = UPrimitiveComponent(scene);
+			if (scene->GetCollisionObjectType() == COLLISION_COLLECTIBLE) {
+				UPrimitiveComponent* primComp = static_cast<UPrimitiveComponent*>(pawn->GetRootComponent());
+				_pawnMaterial = static_cast<UMeshComponent*>(primComp);
+				if(_pawnMaterial == nullptr)
+					_pawnMaterial->SetMaterial(0, _poweredUpMaterial);
+				world->GetTimerManager().SetTimer(_powerUpTimer, this, &ASDTAIController::OnPowerUpDone, _powerUpDuration, false);
+			}
+				UE_LOG(LogTemp, Log, TEXT("%s"), *actor->GetName());
+
+		}
+
+		//UE_LOG(LogTemp, Log, TEXT("%f"), ((_powerUp->GetActorLocation() - pawn->GetActorLocation()) * FVector(1.f, 1.f, 0.f)).Size());
 		_currentState = WANDERING;
 	}
 
 	if (LocateDeathTrap(pawn, world)) {
 		_currentState = WANDERING;
 	}
-	
+}
+
+void ASDTAIController::OnPowerUpDone() {
+	_pawnMaterial->SetMaterial(0, nullptr);
+
+	GetWorld()->GetTimerManager().ClearTimer(_powerUpTimer);
 }
 
 bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world) {

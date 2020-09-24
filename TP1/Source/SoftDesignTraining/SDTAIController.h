@@ -26,6 +26,8 @@ private:
 	enum PawnState { WANDERING, PICKING_POWERUP, CHASING };
 	PawnState _currentState = WANDERING;
     ASDTCollectible* _powerUp;
+	FTimerHandle _powerUpTimer;
+	UMeshComponent* _pawnMaterial = nullptr;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
@@ -34,6 +36,10 @@ public:
     float _maxSpeed = 1.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _detectionDistance = 200.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+		float _powerUpDuration = 10.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+		UMaterialInterface* _poweredUpMaterial;
 
     virtual void Tick(float deltaTime) override;
 
@@ -55,4 +61,6 @@ public:
 	bool IsInsideCone(APawn * pawn, AActor * targetActor) const;
 
     bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
+
+	void OnPowerUpDone();
 };
