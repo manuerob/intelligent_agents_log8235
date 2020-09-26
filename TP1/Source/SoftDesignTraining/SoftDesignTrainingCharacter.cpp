@@ -31,7 +31,7 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
     {
         SetActorLocation(m_StartingPosition);
 		SetActorRotation(m_StartingRotation);
-		_controller->currentState = _controller->PawnState::WANDERING;
+		_controller->OnPawnDeath();
     }
     else if(ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(OtherActor))
     {
@@ -47,7 +47,7 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
 		if (mainCharacter->IsPoweredUp()) {
 			SetActorLocation(m_StartingPosition);
 			SetActorRotation(m_StartingRotation);
-			_controller->currentState = _controller->PawnState::WANDERING;
+			_controller->OnPawnDeath();
 		}
     }
 }
