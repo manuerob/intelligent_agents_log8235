@@ -18,13 +18,13 @@ void ASDTAIController::Tick(float deltaTime)
 	{
 		case WANDERING:
 			UE_LOG(LogTemp, Log, TEXT("WANDERING"));
-			Wandering(deltaTime, pawn, world);
 			LocateObjects(deltaTime, pawn, world);
+			Wandering(deltaTime, pawn, world);
 			break;
 
 		case ROTATING:
 			UE_LOG(LogTemp, Log, TEXT("ROTATING"));
-			LocateObjects(deltaTime, pawn, world);
+			//LocateObjects(deltaTime, pawn, world);
 			Rotating(pawn, deltaTime);
 			break;
 
