@@ -19,12 +19,14 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
     GENERATED_BODY()
 
 private:
-    const float REVERSE_DIR = -1.0;
+    const float REVERSE_DIR = -1.0f;
     float _speed = 0.0f;
     float _time = 0.0f;
 	float _visionAngle = PI / 3.0f;
-	enum PawnState { WANDERING, PICKING_POWERUP, CHASING };
+    float _yaw = 1.0f;
+	enum PawnState { WANDERING, ROTATING, PICKING_POWERUP, CHASING };
 	PawnState _currentState = WANDERING;
+    FVector _directionGlob;
     ASDTCollectible* _powerUp;
 	//FTimerHandle _powerUpTimer;
 	//UMeshComponent* _pawnMaterial = nullptr;
@@ -44,11 +46,13 @@ public:
     virtual void Tick(float deltaTime) override;
 
 	void Wandering(float deltaTime, APawn* pawn, UWorld* world);
+    void Rotating(APawn* pawn);
 
     void CalculateSpeed(APawn* pawn);
     void SetSpeedVector(APawn* pawn, FVector dir);
 
     FVector GetNextDirection(APawn* pawn, UWorld* world);
+    FVector GetNextDirectionParallelToWorld(FVector direction);
     void RotatePawn(APawn* pawn, FRotator rotation);
     FRotator GetRotatorFromDirection(APawn* pawn, FVector newDir);
 

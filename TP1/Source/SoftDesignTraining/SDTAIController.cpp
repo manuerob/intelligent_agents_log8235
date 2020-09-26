@@ -3,10 +3,16 @@
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
 
+bool equalFloats(float a, float b) {
+	return fabs(a - b) < 0.001;
+}
+
 void ASDTAIController::Tick(float deltaTime) 
 {
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
+
+	_time += deltaTime;
 
 	switch (_currentState) 
 	{
@@ -14,11 +20,18 @@ void ASDTAIController::Tick(float deltaTime)
 			Wandering(deltaTime, pawn, world);
 			LocateObjects(pawn, world);
 			break;
+
+		case ROTATING:
+			Rotating(pawn);
+			break;
+
 		case PICKING_POWERUP:
 			PickUpPowerUp(deltaTime, pawn, world);
 			break;
+
 		case CHASING:
 			break;
+
 		default:
 			break;
 	}
@@ -26,13 +39,12 @@ void ASDTAIController::Tick(float deltaTime)
 
 void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world) 
 {
-	FVector currentPawnPos = pawn->GetActorLocation();
+	FVector pawnPosition = pawn->GetActorLocation();
 
-	_time += deltaTime;
-
-	if (RayCast(pawn, world, currentPawnPos, currentPawnPos + _detectionDistance * pawn->GetActorForwardVector())) 
+	if (RayCast(pawn, world, pawnPosition, pawnPosition + _detectionDistance * pawn->GetActorForwardVector()))
 	{
-		RotatePawn(pawn, GetRotatorFromDirection(pawn, GetNextDirection(pawn, world)));
+		_directionGlob = GetNextDirection(pawn, world);
+		_currentState = ROTATING;
 		_speed /= 2;
 		_time = _speed / _a;
 	}
@@ -41,6 +53,18 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
 }
 
+void ASDTAIController::Rotating(APawn* pawn) {
+	float angleToRotate = std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), _directionGlob.GetSafeNormal()));
+	if (!equalFloats(angleToRotate, 0.0f)) {
+		pawn->AddActorWorldRotation(FRotator(0, angleToRotate * _yaw * _speed * 25.0f, 0));
+	}
+	else {
+		_currentState = WANDERING;
+	}
+
+	CalculateSpeed(pawn);
+	SetSpeedVector(pawn, pawn->GetActorForwardVector());
+}
 
 void ASDTAIController::CalculateSpeed(APawn* pawn) 
 {
@@ -58,21 +82,48 @@ void ASDTAIController::SetSpeedVector(APawn* pawn, FVector dir)
 
 FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world) 
 {
-    FVector pawnRightVector = pawn->GetActorRightVector();
-    bool leftRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + _detectionDistance * pawnRightVector * REVERSE_DIR);
-    bool rightRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + _detectionDistance * pawnRightVector);
-    FVector nextDir;
+	FVector pawnRightVector = pawn->GetActorRightVector();
+	bool leftRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector * REVERSE_DIR);
+	bool rightRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector);
+	FVector nextDir;
+	if (leftRayCast && rightRayCast) {
+		if (std::rand() % 2) {
+			nextDir = pawnRightVector;
+			_yaw = 1.0f;
+		}
+		else {
+			nextDir = pawnRightVector * REVERSE_DIR;
+			_yaw = -1.0f;
+		}
+	}
+	else if (leftRayCast) {
+		nextDir = pawnRightVector * REVERSE_DIR;
+		_yaw = -1.0f;
+	}
+	else if (rightRayCast) {
+		nextDir = pawnRightVector;
+		_yaw = 1.0f;
+	}
+	else {
+		nextDir = pawn->GetActorForwardVector() * REVERSE_DIR;
+	}
 
-    if (leftRayCast && rightRayCast)
-        nextDir = std::rand() % 2 ? pawnRightVector : pawnRightVector * REVERSE_DIR;
-    else if(leftRayCast)
-        nextDir = pawnRightVector * REVERSE_DIR;
-    else if (rightRayCast)
-        nextDir = pawnRightVector;
-    else 
-        nextDir = pawn->GetActorForwardVector() * REVERSE_DIR;
+	return GetNextDirectionParallelToWorld(nextDir);
+}
 
-    return nextDir;
+FVector ASDTAIController::GetNextDirectionParallelToWorld(FVector direction) {
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
+
+	if (fabs(direction.X) > fabs(direction.Y)) {
+		x = direction.X > 0 ? 1.0f : -1.0f;
+	}
+	else {
+		y = direction.Y > 0 ? 1.0f : -1.0f;
+	}
+
+	return FVector(x, y, z);
 }
 
 void ASDTAIController::RotatePawn(APawn* pawn, FRotator rotation) 
@@ -132,8 +183,6 @@ void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world)
 void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world) 
 {
 	FVector currentPawnPos = pawn->GetActorLocation();
-
-	_time += deltaTime;
 
 	FHitResult hit;
 
