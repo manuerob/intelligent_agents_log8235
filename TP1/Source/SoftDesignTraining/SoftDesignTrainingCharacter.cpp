@@ -19,6 +19,10 @@ void ASoftDesignTrainingCharacter::BeginPlay()
 
     GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ASoftDesignTrainingCharacter::OnBeginOverlap);
     m_StartingPosition = GetActorLocation();
+	m_StartingRotation = GetActorRotation();
+
+	AAIController* AAIcontroller = static_cast<AAIController*>(GetController());
+	_controller = static_cast<ASDTAIController*>(AAIcontroller);
 }
 
 void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -26,6 +30,8 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
     if (OtherComponent->GetCollisionObjectType() == COLLISION_DEATH_OBJECT)
     {
         SetActorLocation(m_StartingPosition);
+		SetActorRotation(m_StartingRotation);
+		_controller->currentState = _controller->PawnState::WANDERING;
     }
     else if(ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(OtherActor))
     {
@@ -38,7 +44,10 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
     }
     else if (ASoftDesignTrainingMainCharacter* mainCharacter = Cast<ASoftDesignTrainingMainCharacter>(OtherActor))
     {
-        if(mainCharacter->IsPoweredUp())
-            SetActorLocation(m_StartingPosition);
+		if (mainCharacter->IsPoweredUp()) {
+			SetActorLocation(m_StartingPosition);
+			SetActorRotation(m_StartingRotation);
+			_controller->currentState = _controller->PawnState::WANDERING;
+		}
     }
 }

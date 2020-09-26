@@ -14,7 +14,7 @@ void ASDTAIController::Tick(float deltaTime)
 
 	_time += deltaTime;
 
-	switch (_currentState) 
+	switch (currentState) 
 	{
 		case WANDERING:
 			Wandering(deltaTime, pawn, world);
@@ -44,7 +44,7 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 	if (RayCast(pawn, world, pawnPosition, pawnPosition + _detectionDistance * pawn->GetActorForwardVector()))
 	{
 		_directionGlob = GetNextDirection(pawn, world);
-		_currentState = ROTATING;
+		currentState = ROTATING;
 		_speed /= 2;
 		_time = _speed / _a;
 	}
@@ -59,7 +59,7 @@ void ASDTAIController::Rotating(APawn* pawn) {
 		pawn->AddActorWorldRotation(FRotator(0, angleToRotate * _yaw * _speed * 25.0f, 0));
 	}
 	else {
-		_currentState = WANDERING;
+		currentState = WANDERING;
 	}
 
 	CalculateSpeed(pawn);
@@ -170,7 +170,7 @@ void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world)
 					ASDTCollectible* collectible = static_cast<ASDTCollectible*>(hit.GetActor());
 					if (!collectible->IsOnCooldown())
 					{
-						_currentState = PICKING_POWERUP;
+						currentState = PICKING_POWERUP;
 						_powerUp = collectible;
 					}
 				}
@@ -223,11 +223,11 @@ void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world
 			UE_LOG(LogTemp, Log, TEXT("%s"), *actor->GetName());
 		}*/
 
-		_currentState = WANDERING;
+		currentState = WANDERING;
 	}
 
 	if (LocateDeathTrap(pawn, world))
-		_currentState = WANDERING;
+		currentState = WANDERING;
 }
 
 //void ASDTAIController::OnPowerUpDone() 

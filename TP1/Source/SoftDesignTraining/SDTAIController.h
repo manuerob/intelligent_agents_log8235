@@ -24,8 +24,6 @@ private:
     float _time = 0.0f;
 	float _visionAngle = PI / 3.0f;
     float _yaw = 1.0f;
-	enum PawnState { WANDERING, ROTATING, PICKING_POWERUP, CHASING };
-	PawnState _currentState = WANDERING;
     FVector _directionGlob;
     ASDTCollectible* _powerUp;
 	//FTimerHandle _powerUpTimer;
@@ -42,6 +40,9 @@ public:
 	//	float _powerUpDuration = 10.f;
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
 	//	UMaterialInterface* _poweredUpMaterial;
+
+	enum PawnState { WANDERING, ROTATING, PICKING_POWERUP, CHASING };
+	PawnState currentState = WANDERING;
 
     virtual void Tick(float deltaTime) override;
 
