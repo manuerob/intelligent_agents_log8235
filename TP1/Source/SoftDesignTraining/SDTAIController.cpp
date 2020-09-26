@@ -4,8 +4,8 @@
 #include "SoftDesignTraining.h"
 #include "SoftDesignTrainingMainCharacter.h"
 
-
-bool equalFloats(float a, float b) {
+bool equalFloats(float a, float b) 
+{
 	return fabs(a - b) < 0.001;
 }
 
@@ -51,7 +51,7 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 	if (RayCast(pawn, world, pawnPosition, pawnPosition + _detectionDistance * pawn->GetActorForwardVector()))
 	{
 		_directionGlob = GetNextDirection(pawn, world);
-		//_currentState = ROTATING;
+		_currentState = ROTATING;
 		_speed /= 2;
 	}
 
@@ -59,14 +59,14 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
 }
 
-void ASDTAIController::Rotating(APawn* pawn, float deltaTime) {
+void ASDTAIController::Rotating(APawn* pawn, float deltaTime) 
+{
 	float angleToRotate = std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), _directionGlob.GetSafeNormal()));
-	if (!equalFloats(angleToRotate, 0.0f)) {
+
+	if (!equalFloats(angleToRotate, 0.0f))
 		pawn->AddActorWorldRotation(FRotator(0, angleToRotate * _yaw * _speed * 25.0f, 0));
-	}
-	else {
+	else 
 		_currentState = WANDERING;
-	}
 
 	CalculateSpeed(pawn, deltaTime);
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
@@ -92,42 +92,48 @@ FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world)
 	bool leftRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector * REVERSE_DIR);
 	bool rightRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector);
 	FVector nextDir;
-	if (leftRayCast && rightRayCast) {
-		if (std::rand() % 2) {
+	
+	if (leftRayCast && rightRayCast) 
+	{
+		if (std::rand() % 2) 
+		{
 			nextDir = pawnRightVector;
 			_yaw = 1.0f;
 		}
-		else {
+		else 
+		{
 			nextDir = pawnRightVector * REVERSE_DIR;
 			_yaw = -1.0f;
 		}
 	}
-	else if (leftRayCast) {
+	else if (leftRayCast) 
+	{
 		nextDir = pawnRightVector * REVERSE_DIR;
 		_yaw = -1.0f;
 	}
-	else if (rightRayCast) {
+	else if (rightRayCast) 
+	{
 		nextDir = pawnRightVector;
 		_yaw = 1.0f;
 	}
-	else {
+	else 
+	{
 		nextDir = pawn->GetActorForwardVector() * REVERSE_DIR;
 	}
 
 	return GetNextDirectionParallelToWorld(nextDir);
 }
 
-FVector ASDTAIController::GetNextDirectionParallelToWorld(FVector direction) {
+FVector ASDTAIController::GetNextDirectionParallelToWorld(FVector direction) 
+{
 	float x = 0.0f;
 	float y = 0.0f;
 	float z = 0.0f;
 
-	if (fabs(direction.X) > fabs(direction.Y)) {
+	if (fabs(direction.X) > fabs(direction.Y))
 		x = direction.X > 0 ? 1.0f : -1.0f;
-	}
-	else {
+	else
 		y = direction.Y > 0 ? 1.0f : -1.0f;
-	}
 
 	return FVector(x, y, z);
 }
@@ -157,7 +163,8 @@ void ASDTAIController::LocateObjects(float deltaTime, APawn* pawn, UWorld* world
 	LocatePowerUp(pawn, world);
 }
 
-bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world) {
+bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world) 
+{
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
 
 	TArray<FOverlapResult> outResults;
@@ -179,34 +186,43 @@ bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world)
 			{
 				if (hit.GetComponent()->GetCollisionObjectType() == COLLISION_PLAYER) {
 					ASoftDesignTrainingMainCharacter* player = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
-					if (!player->IsPoweredUp()) {
+					if (!player->IsPoweredUp()) 
+					{
 						_currentState = CHASING;
 						_powerUp = nullptr;
 						ChasingPlayer(player->GetActorLocation(), deltaTime, pawn, world);
+
 						return true;
 					}
-					else {
+					else 
+					{
 						_currentState = WANDERING;
 					}
 				}
-				else {
+				else 
+				{
 					_currentState = WANDERING;
 				}
 			}
 			else
+			{
 				_currentState = WANDERING;
+			}
 		}
 		else
+		{
 			_currentState = WANDERING;
+		}
 	}
-	if (_currentState == CHASING) {
+
+	if (_currentState == CHASING)
 		_currentState = WANDERING;
-	}
+
 	return false;
 }
 
-void ASDTAIController::ChasingPlayer(FVector playerLocation, float deltaTime, APawn* pawn, UWorld* world) {
-	
+void ASDTAIController::ChasingPlayer(FVector playerLocation, float deltaTime, APawn* pawn, UWorld* world) 
+{
 	FVector toTarget = (playerLocation - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
 
 	RotatePawn(pawn, GetRotatorFromDirection(pawn, toTarget));
@@ -217,21 +233,20 @@ void ASDTAIController::ChasingPlayer(FVector playerLocation, float deltaTime, AP
 	TArray<AActor*> overlappingActors;
 	pawn->GetOverlappingActors(overlappingActors);
 
-	for (AActor* actor : overlappingActors) {
-		USceneComponent* scene = actor->GetRootComponent();
-		if (scene->GetCollisionObjectType() == COLLISION_PLAYER) {
-			UE_LOG(LogTemp, Log, TEXT("afdg"));
-		}
-	}
+	//for (AActor* actor : overlappingActors) 
+	//{
+	//	USceneComponent* scene = actor->GetRootComponent();
+	//	if (scene->GetCollisionObjectType() == COLLISION_PLAYER) {
+	//		UE_LOG(LogTemp, Log, TEXT("afdg"));
+	//	}
+	//}
 
-	if (LocateDeathTrap(pawn, world)) {
+	if (LocateDeathTrap(pawn, world))
 		_currentState = WANDERING;
-	}
 }
 
 void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world) 
 {
-
 	FVector toTarget = (_powerUp->GetActorLocation() - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
 
 	RotatePawn(pawn, GetRotatorFromDirection(pawn, toTarget));
@@ -239,16 +254,17 @@ void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world
 	CalculateSpeed(pawn, deltaTime);
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
 
-	if (_powerUp->IsOnCooldown()) {
+	if (_powerUp->IsOnCooldown()) 
+	{
 		_currentState = WANDERING;
 		_powerUp = nullptr;
 	}
 
-	if (LocateDeathTrap(pawn, world)) {
+	if (LocateDeathTrap(pawn, world)) 
+	{
 		_currentState = WANDERING;
 		_powerUp = nullptr;
-	}
-		
+	}	
 }
 
 bool ASDTAIController::LocatePowerUp(APawn* pawn, UWorld* world)
@@ -279,12 +295,14 @@ bool ASDTAIController::LocatePowerUp(APawn* pawn, UWorld* world)
 					{
 						_currentState = PICKING_POWERUP;
 						_powerUp = collectible;
+
 						return true;
 					}
 				}
 			}
 		}
 	}
+
 	return false;
 }
 
@@ -294,7 +312,7 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 
 	FHitResult outResult;
 
-	FCollisionObjectQueryParams objectQueryParams; // All objects
+	FCollisionObjectQueryParams objectQueryParams;
 
 	objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
 
@@ -322,7 +340,8 @@ PhysicsHelpers ASDTAIController::GetPhysicsHelpers()
     return PhysicsHelpers(world);
 }
 
-void ASDTAIController::OnPawnDeath() {
+void ASDTAIController::OnPawnDeath() 
+{
 	_powerUp = nullptr;
 	_currentState = WANDERING;
 }
