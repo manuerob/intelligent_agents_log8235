@@ -3,6 +3,7 @@
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
 #include "SoftDesignTrainingMainCharacter.h"
+#include "DrawDebugHelpers.h"
 
 bool equalFloats(float a, float b) 
 {
@@ -24,7 +25,6 @@ void ASDTAIController::Tick(float deltaTime)
 
 		case ROTATING:
 			UE_LOG(LogTemp, Log, TEXT("ROTATING"));
-			//LocateObjects(deltaTime, pawn, world);
 			Rotating(pawn, deltaTime);
 			break;
 
@@ -91,9 +91,13 @@ FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world)
 	FVector pawnRightVector = pawn->GetActorRightVector();
 	bool leftRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector * REVERSE_DIR);
 	bool rightRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector);
+	bool rightDeathTrap = LocateDeathTrap(pawn, world, pawnRightVector);
+	bool leftDeathTrap = LocateDeathTrap(pawn, world, pawnRightVector * REVERSE_DIR);
+	bool isLeftClear = !leftDeathTrap && leftRayCast;
+	bool isRightClear = !rightDeathTrap && rightRayCast;
 	FVector nextDir;
 	
-	if (leftRayCast && rightRayCast) 
+	if (isLeftClear && isRightClear) 
 	{
 		if (std::rand() % 2) 
 		{
@@ -106,12 +110,12 @@ FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world)
 			_yaw = -1.0f;
 		}
 	}
-	else if (leftRayCast) 
+	else if (isLeftClear)
 	{
 		nextDir = pawnRightVector * REVERSE_DIR;
 		_yaw = -1.0f;
 	}
-	else if (rightRayCast) 
+	else if (isRightClear)
 	{
 		nextDir = pawnRightVector;
 		_yaw = 1.0f;
@@ -325,6 +329,19 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 	} 
 
 	return false;
+}
+
+bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world, FVector direction){
+	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
+
+	FHitResult outResult;
+
+	FCollisionObjectQueryParams objectQueryParams;
+
+	objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
+	bool hitDetected = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + direction * 200.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
+
+	return (hitDetected && outResult.Distance < 200.0f);
 }
 
 bool ASDTAIController::IsInsideCone(APawn * pawn, AActor * targetActor) const

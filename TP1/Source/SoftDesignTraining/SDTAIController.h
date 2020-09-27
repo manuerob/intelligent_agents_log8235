@@ -41,6 +41,8 @@ private:
 
 	void LocateObjects(float deltaTime, APawn* pawn, UWorld* world);
 	bool LocateDeathTrap(APawn* pawn, UWorld* world);
+	bool LocateDeathTrap(APawn* pawn, UWorld* world, FVector direction);
+
 	bool LocatePowerUp(APawn* pawn, UWorld* world);
 	bool LocatePlayer(float deltaTime, APawn* pawn, UWorld* world);
 
