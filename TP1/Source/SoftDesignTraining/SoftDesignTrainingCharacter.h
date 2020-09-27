@@ -14,6 +14,8 @@ public:
 
     virtual void BeginPlay() override;
     virtual void OnCollectPowerUp() {};
+    int m_nbDeath = 0;
+    int m_nbPickUpCollected = 0;
 
 protected:
     UFUNCTION()

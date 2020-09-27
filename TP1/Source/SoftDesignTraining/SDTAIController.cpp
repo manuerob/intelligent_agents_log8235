@@ -2,11 +2,28 @@
 
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
+#include <Runtime\Engine\Classes\Kismet\KismetMathLibrary.h>
+
+ASDTAIController::ASDTAIController(){
+
+	TArray<AActor*> agents;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASoftDesignTrainingCharacter::StaticClass(), agents);
+
+	for (int i = 0; i < agents.Num(); i++) {
+
+		ASoftDesignTrainingCharacter* agent = Cast<ASoftDesignTrainingCharacter>(agents[i]);
+		_agents.Add(agent);
+
+	}
+}
 
 void ASDTAIController::Tick(float deltaTime) 
 {
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
+
+	_trainingTimer += deltaTime;
+	DisplayAutomaticTest();
 
 	switch (_currentState) 
 	{
@@ -22,6 +39,8 @@ void ASDTAIController::Tick(float deltaTime)
 		default:
 			break;
 	}
+
+	
 }
 
 void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world) 
@@ -213,6 +232,22 @@ bool ASDTAIController::IsInsideCone(APawn * pawn, AActor * targetActor) const
 	FVector const toTarget = targetActor->GetActorLocation() - pawn->GetActorLocation();
 	FVector const pawnForward = pawn->GetActorForwardVector();
 	return std::abs(std::acos(FVector::DotProduct(pawnForward.GetSafeNormal(), toTarget.GetSafeNormal()))) < _visionAngle;
+}
+
+void ASDTAIController::DisplayAutomaticTest()
+{
+	for (int i = 0; i < _agents.Num(); i++) {
+	
+		FString actorPickUpDeathMessage = _agents[i]->GetActorLabel() + " : " + FString::FromInt(_agents[i]->m_nbPickUpCollected) + " pickups and " + FString::FromInt(_agents[i]->m_nbDeath) + "  deaths";
+		GEngine->AddOnScreenDebugMessage(i+1, 5.0f, FColor::Magenta, actorPickUpDeathMessage, true);
+	
+	}
+	
+	FTimespan clockedTime = UKismetMathLibrary::MakeTimespan(0, 0, 0, _trainingTimer, 0);
+
+	FString timeMessage = "Time : " + clockedTime.ToString();
+	GEngine->AddOnScreenDebugMessage(0, 5.0f, FColor::Orange, timeMessage, true);
+
 }
 
 PhysicsHelpers ASDTAIController::GetPhysicsHelpers() 

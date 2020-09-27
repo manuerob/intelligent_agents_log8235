@@ -7,6 +7,7 @@
 #include "PhysicsHelpers.h"
 #include "SDTCollectible.h"
 #include "SDTUtils.h"
+#include "SoftDesignTrainingCharacter.h"
 
 #include "SDTAIController.generated.h"
 
@@ -22,10 +23,12 @@ private:
     const float REVERSE_DIR = -1.0;
     float _speed = 0.0f;
     float _time = 0.0f;
+    float _trainingTimer = 0.0f;
 	float _visionAngle = PI / 3.0f;
 	enum PawnState { WANDERING, PICKING_POWERUP, CHASING };
 	PawnState _currentState = WANDERING;
     ASDTCollectible* _powerUp;
+    TArray<ASoftDesignTrainingCharacter*> _agents;
 	//FTimerHandle _powerUpTimer;
 	//UMeshComponent* _pawnMaterial = nullptr;
 
@@ -40,6 +43,8 @@ public:
 	//	float _powerUpDuration = 10.f;
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
 	//	UMaterialInterface* _poweredUpMaterial;
+
+    ASDTAIController();
 
     virtual void Tick(float deltaTime) override;
 
@@ -61,6 +66,8 @@ public:
 	bool IsInsideCone(APawn * pawn, AActor * targetActor) const;
 
     bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
+
+    void DisplayAutomaticTest();
 
 	//void OnPowerUpDone();
 };
