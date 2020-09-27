@@ -15,6 +15,8 @@ void ASDTAIController::Tick(float deltaTime)
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
 
+	ValidateExposedParams();
+
 	switch (_currentState) 
 	{
 		case WANDERING:
@@ -97,7 +99,7 @@ FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world)
 	bool isRightClear = !rightDeathTrap && rightRayCast;
 	FVector nextDir;
 	
-	if (isLeftClear && isRightClear) 
+	if (isLeftClear && isRightClear)
 	{
 		if (std::rand() % 2) 
 		{
@@ -200,6 +202,8 @@ bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world)
 					}
 					else 
 					{
+						FVector escapeDir = GetNextDirection(pawn, world);
+						RotatePawn(pawn, GetRotatorFromDirection(pawn, escapeDir));
 						_currentState = WANDERING;
 					}
 				}
@@ -320,18 +324,20 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 
 	objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
 
-	bool isDeathTrapFound = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 100.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
+	bool isDeathTrapFound = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 150.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
 
 	if (isDeathTrapFound) 
 	{
-		RotatePawn(pawn, GetRotatorFromDirection(pawn, -pawn->GetActorForwardVector()));
+		FVector escapeDir = GetNextDirection(pawn, world);
+		RotatePawn(pawn, GetRotatorFromDirection(pawn, escapeDir));
+		SetSpeedVector(pawn, pawn->GetActorForwardVector());
 		return true;
 	} 
 
 	return false;
 }
 
-bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world, FVector direction){
+bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world, FVector direction) {
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
 
 	FHitResult outResult;
@@ -361,4 +367,34 @@ void ASDTAIController::OnPawnDeath()
 {
 	_powerUp = nullptr;
 	_currentState = WANDERING;
+}
+
+void ASDTAIController::ValidateExposedParams() {
+	ValidateDetectionDist();
+	ValidateMaxSpeed();
+	ValidateAcceleration();
+}
+
+void ASDTAIController::ValidateDetectionDist() {
+	if (_detectionDistance < 50.0f) {
+		_detectionDistance = 50.0f;
+	} else if (_detectionDistance > 300.0f) {
+		_detectionDistance = 300.0f;
+	}
+}
+
+void ASDTAIController::ValidateMaxSpeed() {
+	if (_maxSpeed < 0.5f) {
+		_maxSpeed = 0.5f;
+	} else if (_maxSpeed > 1.0f) {
+		_maxSpeed = 1.0f;
+	}
+}
+
+void ASDTAIController::ValidateAcceleration() {
+	if (_a < 0.01f) {
+		_a = 0.01f;
+	} else if (_a > 1.0f) {
+		_a = 1.0f;
+	}
 }

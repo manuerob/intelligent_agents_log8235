@@ -55,6 +55,11 @@ private:
 
 	bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
 
+	void ValidateExposedParams();
+	void ValidateDetectionDist();
+	void ValidateMaxSpeed();
+	void ValidateAcceleration();
+
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _a = 0.1;
