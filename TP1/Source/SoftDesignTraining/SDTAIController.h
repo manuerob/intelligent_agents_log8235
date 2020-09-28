@@ -65,10 +65,11 @@ private:
 	void DisplayAutomaticTest();
 
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float _a = 0.1;
+	// Constante servant à scale la vitesse maximale de l'AI. Elle doit avoir une valeur entre 0.5f et 1.0f.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _maxSpeed = 1.0f;
+
+	// Constante servant à déterminer la distance à laquelle l'AI va détecter un mur. Elle doit avoir une valeur entre 50.0f et 300.0f.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _detectionDistance = 150.0f;
 

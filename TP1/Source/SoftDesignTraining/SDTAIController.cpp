@@ -22,7 +22,6 @@ void ASDTAIController::Tick(float deltaTime)
 {
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
-
 	ValidateExposedParams();
 
 	if (_agent != nullptr) {
@@ -44,6 +43,7 @@ void ASDTAIController::Tick(float deltaTime)
 
 		case ROTATING:
 			//UE_LOG(LogTemp, Log, TEXT("ROTATING"));
+			LocateObjects(deltaTime, pawn, world);
 			Rotating(pawn, deltaTime);
 			break;
 
@@ -93,7 +93,7 @@ void ASDTAIController::Rotating(APawn* pawn, float deltaTime)
 
 void ASDTAIController::CalculateSpeed(APawn* pawn, float deltaTime) 
 {
-	_speed += deltaTime * _a;
+	_speed += deltaTime * GetCharacter()->GetCharacterMovement()->GetMaxAcceleration();
 
     if (_speed > _maxSpeed)
         _speed = _maxSpeed;
@@ -181,15 +181,14 @@ void ASDTAIController::LocateObjects(float deltaTime, APawn* pawn, UWorld* world
 {
 	LocateDeathTrap(pawn, world);
 
-	LocatePlayer(deltaTime, pawn, world);
-
 	LocatePowerUp(pawn, world);
+
+	LocatePlayer(deltaTime, pawn, world);
 }
 
 bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world) 
 {
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
-
 	TArray<FOverlapResult> outResults;
 
 	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, true, COLLISION_PLAYER);
@@ -219,24 +218,11 @@ bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world)
 					}
 					else 
 					{
-						FVector escapeDir = GetNextDirection(pawn, world);
-						RotatePawn(pawn, GetRotatorFromDirection(pawn, escapeDir));
-						_currentState = WANDERING;
+						_directionGlob = GetNextDirection(pawn, world);
+						_currentState = ROTATING;
 					}
 				}
-				else 
-				{
-					_currentState = WANDERING;
-				}
 			}
-			else
-			{
-				_currentState = WANDERING;
-			}
-		}
-		else
-		{
-			_currentState = WANDERING;
 		}
 	}
 
@@ -343,6 +329,7 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 		//RotatePawn(pawn, GetRotatorFromDirection(pawn, escapeDir));
 		RotatePawn(pawn, GetRotatorFromDirection(pawn, contactDirection));
 		SetSpeedVector(pawn, pawn->GetActorForwardVector());
+		_currentState = WANDERING;
 		return true;
 	} 
 
@@ -405,10 +392,10 @@ void ASDTAIController::ValidateMaxSpeed() {
 }
 
 void ASDTAIController::ValidateAcceleration() {
-	if (_a < 0.01f) {
-		_a = 0.01f;
-	} else if (_a > 1.0f) {
-		_a = 1.0f;
+	if (GetCharacter()->GetCharacterMovement()->GetMaxAcceleration() < 150.0f) {
+		GetCharacter()->GetCharacterMovement()->MaxAcceleration = 150.0f;
+	} else if (GetCharacter()->GetCharacterMovement()->GetMaxAcceleration() > 500.0f) {
+		GetCharacter()->GetCharacterMovement()->MaxAcceleration = 500.0f;
 	}
 }
 
