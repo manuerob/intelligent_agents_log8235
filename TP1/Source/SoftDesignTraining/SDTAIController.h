@@ -41,7 +41,7 @@ private:
 
 	void LocateObjects(float deltaTime, APawn* pawn, UWorld* world);
 	bool LocateDeathTrap(APawn* pawn, UWorld* world);
-	bool LocateDeathTrap(APawn* pawn, UWorld* world, FVector direction);
+	bool LocateDeathTrapOnEachSide(APawn* pawn, UWorld* world, FVector direction);
 
 	bool LocatePowerUp(APawn* pawn, UWorld* world);
 	bool LocatePlayer(float deltaTime, APawn* pawn, UWorld* world);
@@ -66,7 +66,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _maxSpeed = 1.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float _detectionDistance = 200.0f;
+    float _detectionDistance = 150.0f;
 
     virtual void Tick(float deltaTime) override;
 
