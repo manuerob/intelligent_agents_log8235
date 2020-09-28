@@ -7,7 +7,7 @@
 #include "PhysicsHelpers.h"
 #include "SDTCollectible.h"
 #include "SDTUtils.h"
-
+#include "SoftDesignTrainingCharacter.h"
 #include "SDTAIController.generated.h"
 
 /**
@@ -24,9 +24,11 @@ private:
 	float _visionAngle = PI / 3.0f;
     float _yaw = 1.0f;
     FVector _directionGlob;
+	float _trainingTimer = 0.0f;
     ASDTCollectible* _powerUp;
 	enum PawnState { WANDERING, ROTATING, PICKING_POWERUP, CHASING };
 	PawnState _currentState = WANDERING;
+	ASoftDesignTrainingCharacter* _agent;
 
 	void Wandering(float deltaTime, APawn* pawn, UWorld* world);
 	void Rotating(APawn* pawn, float deltaTime);
@@ -60,6 +62,8 @@ private:
 	void ValidateMaxSpeed();
 	void ValidateAcceleration();
 
+	void DisplayAutomaticTest();
+
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _a = 0.1;
@@ -67,6 +71,8 @@ public:
     float _maxSpeed = 1.0f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _detectionDistance = 150.0f;
+
+	virtual void BeginPlay() override;
 
     virtual void Tick(float deltaTime) override;
 

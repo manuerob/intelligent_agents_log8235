@@ -3,11 +3,19 @@
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
 #include "SoftDesignTrainingMainCharacter.h"
+#include <Runtime\Engine\Classes\Kismet\KismetMathLibrary.h>
 #include "DrawDebugHelpers.h"
 
 bool equalFloats(float a, float b) 
 {
 	return fabs(a - b) < 0.001;
+}
+
+void ASDTAIController::BeginPlay() {
+	Super::BeginPlay();
+
+	AActor* agentActor = static_cast<AActor*>(GetPawn());
+	_agent = static_cast<ASoftDesignTrainingCharacter*>(agentActor);
 }
 
 void ASDTAIController::Tick(float deltaTime) 
@@ -17,27 +25,36 @@ void ASDTAIController::Tick(float deltaTime)
 
 	ValidateExposedParams();
 
+	if (_agent != nullptr) {
+		if (_agent->isRespawn) {
+			OnPawnDeath();
+		}
+	}
+
+	_trainingTimer += deltaTime;
+	DisplayAutomaticTest();
+
 	switch (_currentState) 
 	{
 		case WANDERING:
-			UE_LOG(LogTemp, Log, TEXT("WANDERING"));
+			//UE_LOG(LogTemp, Log, TEXT("WANDERING"));
 			LocateObjects(deltaTime, pawn, world);
 			Wandering(deltaTime, pawn, world);
 			break;
 
 		case ROTATING:
-			UE_LOG(LogTemp, Log, TEXT("ROTATING"));
+			//UE_LOG(LogTemp, Log, TEXT("ROTATING"));
 			Rotating(pawn, deltaTime);
 			break;
 
 		case PICKING_POWERUP:
-			UE_LOG(LogTemp, Log, TEXT("POWERUP"));
+			//UE_LOG(LogTemp, Log, TEXT("POWERUP"));
 			PickUpPowerUp(deltaTime, pawn, world);
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
 		case CHASING:
-			UE_LOG(LogTemp, Log, TEXT("Chasing"));
+			//UE_LOG(LogTemp, Log, TEXT("Chasing"));
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
@@ -362,6 +379,7 @@ void ASDTAIController::OnPawnDeath()
 {
 	_powerUp = nullptr;
 	_currentState = WANDERING;
+	_agent->isRespawn = false;
 }
 
 void ASDTAIController::ValidateExposedParams() {
@@ -392,4 +410,15 @@ void ASDTAIController::ValidateAcceleration() {
 	} else if (_a > 1.0f) {
 		_a = 1.0f;
 	}
+}
+
+void ASDTAIController::DisplayAutomaticTest()
+{
+	FTimespan clockedTime = UKismetMathLibrary::MakeTimespan(0, 0, 0, _trainingTimer, 0);
+
+	FString timeMessage = "Time : " + clockedTime.ToString();
+	GEngine->AddOnScreenDebugMessage(1, 5.0f, FColor::Orange, timeMessage, true);
+
+	FString actorPickUpDeathMessage = _agent->GetActorLabel() + " : " + FString::FromInt(_agent->pickUpCount) + " pickups and " + FString::FromInt(_agent->deathCount) + "  deaths";
+	GEngine->AddOnScreenDebugMessage(_agent->key + 1, 5.0f, FColor::Magenta, actorPickUpDeathMessage, true);
 }

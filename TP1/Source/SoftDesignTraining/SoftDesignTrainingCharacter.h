@@ -1,7 +1,6 @@
 // Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 #pragma once
 #include "GameFramework/Character.h"
-#include "SDTAIController.h"
 #include "SoftDesignTrainingCharacter.generated.h"
 
 UCLASS()
@@ -12,8 +11,15 @@ class ASoftDesignTrainingCharacter : public ACharacter
 public:
     ASoftDesignTrainingCharacter();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+	int key;
+
     virtual void BeginPlay() override;
     virtual void OnCollectPowerUp() {};
+
+	int deathCount = 0;
+	int pickUpCount = 0;
+	bool isRespawn = false;
 
 protected:
     UFUNCTION()
@@ -23,7 +29,5 @@ protected:
 
 	FRotator m_StartingRotation;
 
-private: 
-	ASDTAIController* _controller;
 };
 

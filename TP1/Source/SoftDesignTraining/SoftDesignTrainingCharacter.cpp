@@ -20,9 +20,6 @@ void ASoftDesignTrainingCharacter::BeginPlay()
     GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ASoftDesignTrainingCharacter::OnBeginOverlap);
     m_StartingPosition = GetActorLocation();
 	m_StartingRotation = GetActorRotation();
-
-	AAIController* AAIcontroller = static_cast<AAIController*>(GetController());
-	_controller = static_cast<ASDTAIController*>(AAIcontroller);
 }
 
 void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -31,13 +28,16 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
     {
         SetActorLocation(m_StartingPosition);
 		SetActorRotation(m_StartingRotation);
-		_controller->OnPawnDeath();
-    }
+		deathCount++;
+		UE_LOG(LogTemp, Log, TEXT("died to trap"));
+		isRespawn = true;
+	}
     else if(ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(OtherActor))
     {
         if (!collectibleActor->IsOnCooldown())
         {
             OnCollectPowerUp();
+			pickUpCount++;
         }
 
         collectibleActor->Collect();
@@ -47,7 +47,9 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
 		if (mainCharacter->IsPoweredUp()) {
 			SetActorLocation(m_StartingPosition);
 			SetActorRotation(m_StartingRotation);
-			_controller->OnPawnDeath();
+			deathCount++;
+			UE_LOG(LogTemp, Log, TEXT("died to player"));
+			isRespawn = true;
 		}
     }
 }
