@@ -20,6 +20,9 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
 
 private:
     const float REVERSE_DIR = -1.0f;
+	const float SPHERE_RADIUS = 1000.f;
+	const float CAPSULE_RADIUS = 100.f;
+
     float _speed = 0.0f;
 	float _visionAngle = PI / 3.0f;
     float _yaw = 1.0f;

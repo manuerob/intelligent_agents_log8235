@@ -20,6 +20,7 @@ void ASDTAIController::BeginPlay() {
 
 void ASDTAIController::Tick(float deltaTime) 
 {
+
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
 	ValidateExposedParams();
@@ -36,21 +37,25 @@ void ASDTAIController::Tick(float deltaTime)
 	switch (_currentState) 
 	{
 		case WANDERING:
+			UE_LOG(LogTemp, Log, TEXT("WANDERING"));
 			LocateObjects(deltaTime, pawn, world);
 			Wandering(deltaTime, pawn, world);
 			break;
 
 		case ROTATING:
-			LocateObjects(deltaTime, pawn, world);
+			UE_LOG(LogTemp, Log, TEXT("ROTATING"));
 			Rotating(pawn, deltaTime);
+			LocateObjects(deltaTime, pawn, world);
 			break;
 
 		case PICKING_POWERUP:
+			UE_LOG(LogTemp, Log, TEXT("POWERUP"));
 			PickUpPowerUp(deltaTime, pawn, world);
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
 		case CHASING:
+			UE_LOG(LogTemp, Log, TEXT("CHASING"));
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
@@ -65,6 +70,8 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 
 	if (RayCast(pawn, world, pawnPosition, pawnPosition + _detectionDistance * pawn->GetActorForwardVector()))
 	{
+		UE_LOG(LogTemp, Log, TEXT("wall"));
+
 		_directionGlob = GetNextDirection(pawn, world);
 		_currentState = ROTATING;
 		_speed /= 2;
@@ -77,8 +84,9 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 void ASDTAIController::Rotating(APawn* pawn, float deltaTime) 
 {
 	float angleToRotate = std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), _directionGlob.GetSafeNormal()));
+	UE_LOG(LogTemp, Log, TEXT("%f"), angleToRotate);
 
-	if (!equalFloats(angleToRotate, 0.0f) && !LocateDeathTrap(pawn, GetWorld()))
+	if (!equalFloats(angleToRotate, 0.0f))
 		pawn->AddActorWorldRotation(FRotator(0, angleToRotate * _yaw * _speed * 25.0f, 0));
 	else 
 		_currentState = WANDERING;
@@ -175,11 +183,13 @@ bool ASDTAIController::RayCast(APawn* pawn, UWorld* world, const FVector& start,
 
 void ASDTAIController::LocateObjects(float deltaTime, APawn* pawn, UWorld* world)
 {
-	LocateDeathTrap(pawn, world);
-
-	LocatePowerUp(pawn, world);
-
-	LocatePlayer(deltaTime, pawn, world);
+	if (!LocateDeathTrap(pawn, world)) {
+		if (!LocatePlayer(deltaTime, pawn, world))
+			LocatePowerUp(pawn, world);
+	}
+	else {
+		UE_LOG(LogTemp, Log, TEXT("trap"));
+	}
 }
 
 bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world) 
@@ -187,7 +197,7 @@ bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world)
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
 	TArray<FOverlapResult> outResults;
 
-	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, false, COLLISION_PLAYER);
+	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * SPHERE_RADIUS, SPHERE_RADIUS, outResults, false, COLLISION_PLAYER);
 
 	for (FOverlapResult outResult : outResults)
 	{
@@ -272,7 +282,7 @@ bool ASDTAIController::LocatePowerUp(APawn* pawn, UWorld* world)
 
 	TArray<FOverlapResult> outResults;
 
-	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, false, COLLISION_COLLECTIBLE);
+	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * SPHERE_RADIUS, SPHERE_RADIUS, outResults, false, COLLISION_COLLECTIBLE);
 
 	for (FOverlapResult outResult : outResults)
 	{
@@ -315,7 +325,7 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 
 	objectQueryParams.AddObjectTypesToQuery(COLLISION_DEATH_OBJECT);
 
-	bool isDeathTrapFound = world->SweepSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 100.f, FQuat(), objectQueryParams, FCollisionShape::MakeSphere(100.f));
+	bool isDeathTrapFound = world->SweepSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * CAPSULE_RADIUS, FQuat(), objectQueryParams, FCollisionShape::MakeSphere(100.f));
 
 	if (isDeathTrapFound) 
 	{
@@ -336,7 +346,7 @@ bool ASDTAIController::LocateDeathTrapOnEachSide(APawn* pawn, UWorld* world, FVe
 
 	FCollisionObjectQueryParams objectQueryParams;
 
-	objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
+	objectQueryParams.AddObjectTypesToQuery(COLLISION_DEATH_OBJECT);
 	bool hitDetected = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + direction * 200.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
 
 	return (hitDetected && outResult.Distance < 200.0f);

@@ -28,7 +28,9 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
     {
         SetActorLocation(m_StartingPosition);
 		SetActorRotation(m_StartingRotation);
-		deathCount++;
+		if (!isRespawn) {
+			deathCount++;
+		}
 		isRespawn = true;
 	}
     else if(ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(OtherActor))
