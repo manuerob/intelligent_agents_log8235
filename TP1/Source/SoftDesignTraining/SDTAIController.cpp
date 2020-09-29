@@ -2,34 +2,61 @@
 
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
+#include "SoftDesignTrainingMainCharacter.h"
+#include <Runtime\Engine\Classes\Kismet\KismetMathLibrary.h>
+#include "DrawDebugHelpers.h"
 
-bool equalFloats(float a, float b) {
+bool equalFloats(float a, float b) 
+{
 	return fabs(a - b) < 0.001;
+}
+
+void ASDTAIController::BeginPlay() {
+	Super::BeginPlay();
+
+	AActor* agentActor = static_cast<AActor*>(GetPawn());
+	_agent = static_cast<ASoftDesignTrainingCharacter*>(agentActor);
 }
 
 void ASDTAIController::Tick(float deltaTime) 
 {
+
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
+	ValidateExposedParams();
 
-	_time += deltaTime;
+	if (_agent != nullptr) {
+		if (_agent->isRespawn) {
+			OnPawnDeath();
+		}
+	}
+
+	_trainingTimer += deltaTime;
+	DisplayAutomaticTest();
 
 	switch (_currentState) 
 	{
 		case WANDERING:
+			UE_LOG(LogTemp, Log, TEXT("WANDERING"));
+			LocateObjects(deltaTime, pawn, world);
 			Wandering(deltaTime, pawn, world);
-			LocateObjects(pawn, world);
 			break;
 
 		case ROTATING:
-			Rotating(pawn);
+			UE_LOG(LogTemp, Log, TEXT("ROTATING"));
+			Rotating(pawn, deltaTime);
+			LocateObjects(deltaTime, pawn, world);
 			break;
 
 		case PICKING_POWERUP:
+			UE_LOG(LogTemp, Log, TEXT("POWERUP"));
 			PickUpPowerUp(deltaTime, pawn, world);
+			LocatePlayer(deltaTime, pawn, world);
 			break;
 
 		case CHASING:
+			UE_LOG(LogTemp, Log, TEXT("CHASING"));
+			LocatePlayer(deltaTime, pawn, world);
 			break;
 
 		default:
@@ -43,32 +70,34 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 
 	if (RayCast(pawn, world, pawnPosition, pawnPosition + _detectionDistance * pawn->GetActorForwardVector()))
 	{
+		UE_LOG(LogTemp, Log, TEXT("wall"));
+
 		_directionGlob = GetNextDirection(pawn, world);
 		_currentState = ROTATING;
 		_speed /= 2;
-		_time = _speed / _a;
 	}
 
-	CalculateSpeed(pawn);
+	CalculateSpeed(pawn, deltaTime);
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
 }
 
-void ASDTAIController::Rotating(APawn* pawn) {
-	float angleToRotate = std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), _directionGlob.GetSafeNormal()));
-	if (!equalFloats(angleToRotate, 0.0f)) {
-		pawn->AddActorWorldRotation(FRotator(0, angleToRotate * _yaw * _speed * 25.0f, 0));
-	}
-	else {
-		_currentState = WANDERING;
-	}
-
-	CalculateSpeed(pawn);
-	SetSpeedVector(pawn, pawn->GetActorForwardVector());
-}
-
-void ASDTAIController::CalculateSpeed(APawn* pawn) 
+void ASDTAIController::Rotating(APawn* pawn, float deltaTime) 
 {
-    _speed = _time * _a;
+	float angleToRotate = std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), _directionGlob.GetSafeNormal()));
+	UE_LOG(LogTemp, Log, TEXT("%f"), angleToRotate);
+
+	if (!equalFloats(angleToRotate, 0.0f))
+		pawn->AddActorWorldRotation(FRotator(0, angleToRotate * _yaw * _speed * 25.0f, 0));
+	else 
+		_currentState = WANDERING;
+
+	CalculateSpeed(pawn, deltaTime);
+	SetSpeedVector(pawn, pawn->GetActorForwardVector());
+}
+
+void ASDTAIController::CalculateSpeed(APawn* pawn, float deltaTime) 
+{
+	_speed += deltaTime * GetCharacter()->GetCharacterMovement()->GetMaxAcceleration();
 
     if (_speed > _maxSpeed)
         _speed = _maxSpeed;
@@ -85,43 +114,53 @@ FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world)
 	FVector pawnRightVector = pawn->GetActorRightVector();
 	bool leftRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector * REVERSE_DIR);
 	bool rightRayCast = !RayCast(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + 350.0f * pawnRightVector);
+	bool rightDeathTrap = LocateDeathTrapOnEachSide(pawn, world, pawnRightVector);
+	bool leftDeathTrap = LocateDeathTrapOnEachSide(pawn, world, pawnRightVector * REVERSE_DIR);
+	bool isLeftClear = !leftDeathTrap && leftRayCast;
+	bool isRightClear = !rightDeathTrap && rightRayCast;
 	FVector nextDir;
-	if (leftRayCast && rightRayCast) {
-		if (std::rand() % 2) {
+	
+	if (isLeftClear && isRightClear)
+	{
+		if (std::rand() % 2) 
+		{
 			nextDir = pawnRightVector;
 			_yaw = 1.0f;
 		}
-		else {
+		else 
+		{
 			nextDir = pawnRightVector * REVERSE_DIR;
 			_yaw = -1.0f;
 		}
 	}
-	else if (leftRayCast) {
+	else if (isLeftClear)
+	{
 		nextDir = pawnRightVector * REVERSE_DIR;
 		_yaw = -1.0f;
 	}
-	else if (rightRayCast) {
+	else if (isRightClear)
+	{
 		nextDir = pawnRightVector;
 		_yaw = 1.0f;
 	}
-	else {
+	else 
+	{
 		nextDir = pawn->GetActorForwardVector() * REVERSE_DIR;
 	}
 
 	return GetNextDirectionParallelToWorld(nextDir);
 }
 
-FVector ASDTAIController::GetNextDirectionParallelToWorld(FVector direction) {
+FVector ASDTAIController::GetNextDirectionParallelToWorld(FVector direction) 
+{
 	float x = 0.0f;
 	float y = 0.0f;
 	float z = 0.0f;
 
-	if (fabs(direction.X) > fabs(direction.Y)) {
+	if (fabs(direction.X) > fabs(direction.Y))
 		x = direction.X > 0 ? 1.0f : -1.0f;
-	}
-	else {
+	else
 		y = direction.Y > 0 ? 1.0f : -1.0f;
-	}
 
 	return FVector(x, y, z);
 }
@@ -142,15 +181,108 @@ bool ASDTAIController::RayCast(APawn* pawn, UWorld* world, const FVector& start,
     return world->LineTraceSingleByObjectType(hit, start, end, FCollisionObjectQueryParams().AllStaticObjects);
 }
 
-void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world) 
+void ASDTAIController::LocateObjects(float deltaTime, APawn* pawn, UWorld* world)
 {
-    PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
+	if (!LocateDeathTrap(pawn, world)) {
+		if (!LocatePlayer(deltaTime, pawn, world))
+			LocatePowerUp(pawn, world);
+	}
+	else {
+		UE_LOG(LogTemp, Log, TEXT("trap"));
+	}
+}
 
-	LocateDeathTrap(pawn, world);
+bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world) 
+{
+	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
+	TArray<FOverlapResult> outResults;
+
+	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * SPHERE_RADIUS, SPHERE_RADIUS, outResults, false, COLLISION_PLAYER);
+
+	for (FOverlapResult outResult : outResults)
+	{
+		if (IsInsideCone(GetPawn(), outResult.GetActor()))
+		{
+			FHitResult hit;
+			AActor* actor = outResult.GetActor();
+
+			FCollisionObjectQueryParams coqp = FCollisionObjectQueryParams();
+			coqp.AddObjectTypesToQuery(COLLISION_PLAYER);
+			coqp.AddObjectTypesToQuery(ECollisionChannel::ECC_WorldStatic);
+
+			if (world->LineTraceSingleByObjectType(hit, pawn->GetActorLocation(), actor->GetActorLocation(), coqp))
+			{
+				if (hit.GetComponent()->GetCollisionObjectType() == COLLISION_PLAYER) {
+					ASoftDesignTrainingMainCharacter* player = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
+					if (!player->IsPoweredUp()) 
+					{
+						_currentState = CHASING;
+						_powerUp = nullptr;
+						ChasingPlayer(player->GetActorLocation(), deltaTime, pawn, world);
+
+						return true;
+					}
+					else 
+					{
+						_directionGlob = GetNextDirection(pawn, world);
+						_currentState = ROTATING;
+					}
+				}
+			}
+		}
+	}
+
+	if (_currentState == CHASING)
+		_currentState = WANDERING;
+
+	return false;
+}
+
+void ASDTAIController::ChasingPlayer(FVector playerLocation, float deltaTime, APawn* pawn, UWorld* world) 
+{
+	FVector toTarget = (playerLocation - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
+
+	RotatePawn(pawn, GetRotatorFromDirection(pawn, toTarget));
+
+	CalculateSpeed(pawn, deltaTime);
+	SetSpeedVector(pawn, pawn->GetActorForwardVector());
+
+	TArray<AActor*> overlappingActors;
+	pawn->GetOverlappingActors(overlappingActors);
+
+	if (LocateDeathTrap(pawn, world))
+		_currentState = WANDERING;
+}
+
+void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world) 
+{
+	FVector toTarget = (_powerUp->GetActorLocation() - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
+
+	RotatePawn(pawn, GetRotatorFromDirection(pawn, toTarget));
+
+	CalculateSpeed(pawn, deltaTime);
+	SetSpeedVector(pawn, pawn->GetActorForwardVector());
+
+	if (_powerUp->IsOnCooldown()) 
+	{
+		_currentState = WANDERING;
+		_powerUp = nullptr;
+	}
+
+	if (LocateDeathTrap(pawn, world)) 
+	{
+		_currentState = WANDERING;
+		_powerUp = nullptr;
+	}	
+}
+
+bool ASDTAIController::LocatePowerUp(APawn* pawn, UWorld* world)
+{
+	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
 
 	TArray<FOverlapResult> outResults;
-    
-	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, true, COLLISION_COLLECTIBLE);
+
+	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * SPHERE_RADIUS, SPHERE_RADIUS, outResults, false, COLLISION_COLLECTIBLE);
 
 	for (FOverlapResult outResult : outResults)
 	{
@@ -165,76 +297,23 @@ void ASDTAIController::LocateObjects(APawn* pawn, UWorld* world)
 
 			if (world->LineTraceSingleByObjectType(hit, pawn->GetActorLocation(), actor->GetActorLocation(), coqp))
 			{
-				if (hit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE) 
+				if (hit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE && !_powerUp)
 				{
 					ASDTCollectible* collectible = static_cast<ASDTCollectible*>(hit.GetActor());
 					if (!collectible->IsOnCooldown())
 					{
 						_currentState = PICKING_POWERUP;
 						_powerUp = collectible;
+
+						return true;
 					}
 				}
 			}
 		}
-
 	}
+
+	return false;
 }
-
-void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world) 
-{
-	FVector currentPawnPos = pawn->GetActorLocation();
-
-	FHitResult hit;
-
-	FCollisionObjectQueryParams coqp = FCollisionObjectQueryParams();
-	coqp.AddObjectTypesToQuery(COLLISION_COLLECTIBLE);
-
-	FVector toTarget = (_powerUp->GetActorLocation() - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
-
-	if (world->LineTraceSingleByObjectType(hit, currentPawnPos, _powerUp->GetActorLocation(), coqp)) 
-	{
-		RotatePawn(pawn, GetRotatorFromDirection(pawn, toTarget));
-		//_speed /= 2;
-		//_time = _speed / _a;
-	}
-
-	CalculateSpeed(pawn);
-	SetSpeedVector(pawn, pawn->GetActorForwardVector());
-
-	TArray<AActor*> overlappingActors;
-	pawn->GetOverlappingActors(overlappingActors);	
-
-	if (_powerUp->IsOnCooldown()) {
-		
-		/*for (AActor* actor : overlappingActors) 
-		{
-			USceneComponent* scene = actor->GetRootComponent();
-			if (scene->GetCollisionObjectType() == COLLISION_COLLECTIBLE) 
-			{
-				UPrimitiveComponent* primComp = static_cast<UPrimitiveComponent*>(pawn->GetRootComponent());
-				_pawnMaterial = static_cast<UMeshComponent*>(primComp);
-
-				if(_pawnMaterial == nullptr)
-					_pawnMaterial->SetMaterial(0, _poweredUpMaterial);
-
-				world->GetTimerManager().SetTimer(_powerUpTimer, this, &ASDTAIController::OnPowerUpDone, _powerUpDuration, false);
-			}
-
-			UE_LOG(LogTemp, Log, TEXT("%s"), *actor->GetName());
-		}*/
-
-		_currentState = WANDERING;
-	}
-
-	if (LocateDeathTrap(pawn, world))
-		_currentState = WANDERING;
-}
-
-//void ASDTAIController::OnPowerUpDone() 
-//{
-//	_pawnMaterial->SetMaterial(0, nullptr);
-//	GetWorld()->GetTimerManager().ClearTimer(_powerUpTimer);
-//}
 
 bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world) 
 {
@@ -242,19 +321,35 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 
 	FHitResult outResult;
 
-	FCollisionObjectQueryParams objectQueryParams; // All objects
+	FCollisionObjectQueryParams objectQueryParams;
 
-	objectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel3);
+	objectQueryParams.AddObjectTypesToQuery(COLLISION_DEATH_OBJECT);
 
-	bool isDeathTrapFound = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 100.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
+	bool isDeathTrapFound = world->SweepSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * CAPSULE_RADIUS, FQuat(), objectQueryParams, FCollisionShape::MakeSphere(100.f));
 
 	if (isDeathTrapFound) 
 	{
-		RotatePawn(pawn, GetRotatorFromDirection(pawn, -pawn->GetActorForwardVector()));
+		FVector contactDirection = FVector::CrossProduct(FVector::UpVector, FVector(outResult.ImpactNormal.X, outResult.ImpactNormal.Y, 0.f));
+		RotatePawn(pawn, GetRotatorFromDirection(pawn, contactDirection));
+		SetSpeedVector(pawn, pawn->GetActorForwardVector());
+		_currentState = WANDERING;
 		return true;
 	} 
 
 	return false;
+}
+
+bool ASDTAIController::LocateDeathTrapOnEachSide(APawn* pawn, UWorld* world, FVector direction) {
+	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
+
+	FHitResult outResult;
+
+	FCollisionObjectQueryParams objectQueryParams;
+
+	objectQueryParams.AddObjectTypesToQuery(COLLISION_DEATH_OBJECT);
+	bool hitDetected = world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + direction * 200.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
+
+	return (hitDetected && outResult.Distance < 200.0f);
 }
 
 bool ASDTAIController::IsInsideCone(APawn * pawn, AActor * targetActor) const
@@ -268,4 +363,52 @@ PhysicsHelpers ASDTAIController::GetPhysicsHelpers()
 {
     UWorld* world = GetWorld();
     return PhysicsHelpers(world);
+}
+
+void ASDTAIController::OnPawnDeath() 
+{
+	_powerUp = nullptr;
+	_currentState = WANDERING;
+	_agent->isRespawn = false;
+}
+
+void ASDTAIController::ValidateExposedParams() {
+	ValidateDetectionDist();
+	ValidateMaxSpeed();
+	ValidateAcceleration();
+}
+
+void ASDTAIController::ValidateDetectionDist() {
+	if (_detectionDistance < 50.0f) {
+		_detectionDistance = 50.0f;
+	} else if (_detectionDistance > 300.0f) {
+		_detectionDistance = 300.0f;
+	}
+}
+
+void ASDTAIController::ValidateMaxSpeed() {
+	if (_maxSpeed < 0.5f) {
+		_maxSpeed = 0.5f;
+	} else if (_maxSpeed > 1.0f) {
+		_maxSpeed = 1.0f;
+	}
+}
+
+void ASDTAIController::ValidateAcceleration() {
+	if (GetCharacter()->GetCharacterMovement()->GetMaxAcceleration() < 150.0f) {
+		GetCharacter()->GetCharacterMovement()->MaxAcceleration = 150.0f;
+	} else if (GetCharacter()->GetCharacterMovement()->GetMaxAcceleration() > 500.0f) {
+		GetCharacter()->GetCharacterMovement()->MaxAcceleration = 500.0f;
+	}
+}
+
+void ASDTAIController::DisplayAutomaticTest()
+{
+	FTimespan clockedTime = UKismetMathLibrary::MakeTimespan(0, 0, 0, _trainingTimer, 0);
+
+	FString timeMessage = "Time : " + clockedTime.ToString();
+	GEngine->AddOnScreenDebugMessage(1, 5.0f, FColor::Orange, timeMessage, true);
+
+	FString actorPickUpDeathMessage = _agent->GetActorLabel() + " : " + FString::FromInt(_agent->pickUpCount) + " pickups and " + FString::FromInt(_agent->deathCount) + "  deaths";
+	GEngine->AddOnScreenDebugMessage(_agent->key + 1, 5.0f, FColor::Magenta, actorPickUpDeathMessage, true);
 }

@@ -106,18 +106,17 @@ bool PhysicsHelpers::SphereOverlap(const FVector& pos, float radius, TArray<stru
     if (drawDebug)
         DrawDebugSphere(m_world, pos, radius, 24, FColor::Green);
 
-
-    FCollisionObjectQueryParams objectQueryParams; // All objects
+	FCollisionObjectQueryParams objectQueryParams;
     FCollisionShape collisionShape;
     collisionShape.SetSphere(radius);
     FCollisionQueryParams queryParams = FCollisionQueryParams::DefaultQueryParam;
     queryParams.bReturnPhysicalMaterial = true;
-	
+
 	if (collisionChannel) {
 		objectQueryParams.AddObjectTypesToQuery(collisionChannel);
 	}
 
-    m_world->OverlapMultiByObjectType(outOverlaps, pos, FQuat::Identity, objectQueryParams, collisionShape, queryParams);
+	m_world->OverlapMultiByObjectType(outOverlaps, pos, FQuat::Identity, objectQueryParams, collisionShape, queryParams);
 
     //Draw overlap results
     if (drawDebug)

@@ -7,7 +7,7 @@
 #include "PhysicsHelpers.h"
 #include "SDTCollectible.h"
 #include "SDTUtils.h"
-
+#include "SoftDesignTrainingCharacter.h"
 #include "SDTAIController.generated.h"
 
 /**
@@ -20,51 +20,65 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
 
 private:
     const float REVERSE_DIR = -1.0f;
+	const float SPHERE_RADIUS = 1000.f;
+	const float CAPSULE_RADIUS = 100.f;
+
     float _speed = 0.0f;
-    float _time = 0.0f;
 	float _visionAngle = PI / 3.0f;
     float _yaw = 1.0f;
+    FVector _directionGlob;
+	float _trainingTimer = 0.0f;
+    ASDTCollectible* _powerUp;
 	enum PawnState { WANDERING, ROTATING, PICKING_POWERUP, CHASING };
 	PawnState _currentState = WANDERING;
-    FVector _directionGlob;
-    ASDTCollectible* _powerUp;
-	//FTimerHandle _powerUpTimer;
-	//UMeshComponent* _pawnMaterial = nullptr;
-
-public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float _a = 0.1;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float _maxSpeed = 1.0f;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float _detectionDistance = 200.0f;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-	//	float _powerUpDuration = 10.f;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-	//	UMaterialInterface* _poweredUpMaterial;
-
-    virtual void Tick(float deltaTime) override;
+	ASoftDesignTrainingCharacter* _agent;
 
 	void Wandering(float deltaTime, APawn* pawn, UWorld* world);
-    void Rotating(APawn* pawn);
+	void Rotating(APawn* pawn, float deltaTime);
 
-    void CalculateSpeed(APawn* pawn);
-    void SetSpeedVector(APawn* pawn, FVector dir);
+	void CalculateSpeed(APawn* pawn, float deltaTime);
+	void SetSpeedVector(APawn* pawn, FVector dir);
 
-    FVector GetNextDirection(APawn* pawn, UWorld* world);
-    FVector GetNextDirectionParallelToWorld(FVector direction);
-    void RotatePawn(APawn* pawn, FRotator rotation);
-    FRotator GetRotatorFromDirection(APawn* pawn, FVector newDir);
+	FVector GetNextDirection(APawn* pawn, UWorld* world);
+	FVector GetNextDirectionParallelToWorld(FVector direction);
+	void RotatePawn(APawn* pawn, FRotator rotation);
+	FRotator GetRotatorFromDirection(APawn* pawn, FVector newDir);
 
-    void LocateObjects(APawn* pawn, UWorld* world);
+	void LocateObjects(float deltaTime, APawn* pawn, UWorld* world);
 	bool LocateDeathTrap(APawn* pawn, UWorld* world);
-    void PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world);
+	bool LocateDeathTrapOnEachSide(APawn* pawn, UWorld* world, FVector direction);
 
-    PhysicsHelpers GetPhysicsHelpers();
+	bool LocatePowerUp(APawn* pawn, UWorld* world);
+	bool LocatePlayer(float deltaTime, APawn* pawn, UWorld* world);
+
+	void PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world);
+	void ChasingPlayer(FVector playerLocation, float deltaTime, APawn* pawn, UWorld* world);
+
+	PhysicsHelpers GetPhysicsHelpers();
 
 	bool IsInsideCone(APawn * pawn, AActor * targetActor) const;
 
-    bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
+	bool RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end);
 
-	//void OnPowerUpDone();
+	void ValidateExposedParams();
+	void ValidateDetectionDist();
+	void ValidateMaxSpeed();
+	void ValidateAcceleration();
+
+	void DisplayAutomaticTest();
+
+public:
+	// Constante servant à scale la vitesse maximale de l'AI. Elle doit avoir une valeur entre 0.5f et 1.0f.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    float _maxSpeed = 1.0f;
+
+	// Constante servant à déterminer la distance à laquelle l'AI va détecter un mur. Elle doit avoir une valeur entre 50.0f et 300.0f.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    float _detectionDistance = 150.0f;
+
+	virtual void BeginPlay() override;
+
+    virtual void Tick(float deltaTime) override;
+
+	void OnPawnDeath();
 };
