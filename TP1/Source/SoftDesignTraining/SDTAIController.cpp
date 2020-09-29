@@ -36,25 +36,21 @@ void ASDTAIController::Tick(float deltaTime)
 	switch (_currentState) 
 	{
 		case WANDERING:
-			//UE_LOG(LogTemp, Log, TEXT("WANDERING"));
 			LocateObjects(deltaTime, pawn, world);
 			Wandering(deltaTime, pawn, world);
 			break;
 
 		case ROTATING:
-			//UE_LOG(LogTemp, Log, TEXT("ROTATING"));
 			LocateObjects(deltaTime, pawn, world);
 			Rotating(pawn, deltaTime);
 			break;
 
 		case PICKING_POWERUP:
-			//UE_LOG(LogTemp, Log, TEXT("POWERUP"));
 			PickUpPowerUp(deltaTime, pawn, world);
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
 		case CHASING:
-			//UE_LOG(LogTemp, Log, TEXT("Chasing"));
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
@@ -191,7 +187,7 @@ bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world)
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
 	TArray<FOverlapResult> outResults;
 
-	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, true, COLLISION_PLAYER);
+	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, false, COLLISION_PLAYER);
 
 	for (FOverlapResult outResult : outResults)
 	{
@@ -276,7 +272,7 @@ bool ASDTAIController::LocatePowerUp(APawn* pawn, UWorld* world)
 
 	TArray<FOverlapResult> outResults;
 
-	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, true, COLLISION_COLLECTIBLE);
+	physicsHelpers.SphereOverlap(pawn->GetActorLocation() + pawn->GetActorForwardVector() * 1000.f, 1000.f, outResults, false, COLLISION_COLLECTIBLE);
 
 	for (FOverlapResult outResult : outResults)
 	{
@@ -320,13 +316,10 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 	objectQueryParams.AddObjectTypesToQuery(COLLISION_DEATH_OBJECT);
 
 	bool isDeathTrapFound = world->SweepSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 100.f, FQuat(), objectQueryParams, FCollisionShape::MakeSphere(100.f));
-		//world->LineTraceSingleByObjectType(outResult, pawn->GetActorLocation(), pawn->GetActorLocation() + pawn->GetActorForwardVector() * 150.f + FVector(0.f, 0.f, -100.f), objectQueryParams);
 
 	if (isDeathTrapFound) 
 	{
 		FVector contactDirection = FVector::CrossProduct(FVector::UpVector, FVector(outResult.ImpactNormal.X, outResult.ImpactNormal.Y, 0.f));
-		//FVector escapeDir = GetNextDirection(pawn, world);
-		//RotatePawn(pawn, GetRotatorFromDirection(pawn, escapeDir));
 		RotatePawn(pawn, GetRotatorFromDirection(pawn, contactDirection));
 		SetSpeedVector(pawn, pawn->GetActorForwardVector());
 		_currentState = WANDERING;

@@ -29,7 +29,6 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
         SetActorLocation(m_StartingPosition);
 		SetActorRotation(m_StartingRotation);
 		deathCount++;
-		UE_LOG(LogTemp, Log, TEXT("died to trap"));
 		isRespawn = true;
 	}
     else if(ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(OtherActor))
@@ -47,8 +46,9 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
 		if (mainCharacter->IsPoweredUp()) {
 			SetActorLocation(m_StartingPosition);
 			SetActorRotation(m_StartingRotation);
-			deathCount++;
-			UE_LOG(LogTemp, Log, TEXT("died to player"));
+			if (!isRespawn) {
+				deathCount++;
+			}
 			isRespawn = true;
 		}
     }
