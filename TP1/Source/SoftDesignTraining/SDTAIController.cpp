@@ -25,11 +25,8 @@ void ASDTAIController::Tick(float deltaTime)
     UWorld* const world = GetWorld();
 	ValidateExposedParams();
 
-	if (_agent != nullptr) {
-		if (_agent->isRespawn) {
+	if (_agent != nullptr && _agent->isRespawn)
 			OnPawnDeath();
-		}
-	}
 
 	_trainingTimer += deltaTime;
 	DisplayAutomaticTest();
@@ -37,25 +34,21 @@ void ASDTAIController::Tick(float deltaTime)
 	switch (_currentState) 
 	{
 		case WANDERING:
-			UE_LOG(LogTemp, Log, TEXT("WANDERING"));
 			LocateObjects(deltaTime, pawn, world);
 			Wandering(deltaTime, pawn, world);
 			break;
 
 		case ROTATING:
-			UE_LOG(LogTemp, Log, TEXT("ROTATING"));
 			Rotating(pawn, deltaTime);
 			LocateObjects(deltaTime, pawn, world);
 			break;
 
 		case PICKING_POWERUP:
-			UE_LOG(LogTemp, Log, TEXT("POWERUP"));
 			PickUpPowerUp(deltaTime, pawn, world);
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
 		case CHASING:
-			UE_LOG(LogTemp, Log, TEXT("CHASING"));
 			LocatePlayer(deltaTime, pawn, world);
 			break;
 
@@ -64,14 +57,13 @@ void ASDTAIController::Tick(float deltaTime)
 	}
 }
 
+//Function called when the pawn is in the WANDERING state. When a wall is detected he is switched to the ROTATING state.
 void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world) 
 {
 	FVector pawnPosition = pawn->GetActorLocation();
 
 	if (RayCast(pawn, world, pawnPosition, pawnPosition + _detectionDistance * pawn->GetActorForwardVector()))
 	{
-		UE_LOG(LogTemp, Log, TEXT("wall"));
-
 		_directionGlob = GetNextDirection(pawn, world);
 		_currentState = ROTATING;
 		_speed /= 2;
@@ -81,10 +73,10 @@ void ASDTAIController::Wandering(float deltaTime, APawn* pawn, UWorld* world)
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
 }
 
+//Function called when the pawn is in the ROTATING state. When the rotation is done the pawn is switched to the WANDERING state.
 void ASDTAIController::Rotating(APawn* pawn, float deltaTime) 
 {
 	float angleToRotate = std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), _directionGlob.GetSafeNormal()));
-	UE_LOG(LogTemp, Log, TEXT("%f"), angleToRotate);
 
 	if (!equalFloats(angleToRotate, 0.0f))
 		pawn->AddActorWorldRotation(FRotator(0, angleToRotate * _yaw * _speed * 25.0f, 0));
@@ -95,6 +87,8 @@ void ASDTAIController::Rotating(APawn* pawn, float deltaTime)
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
 }
 
+
+//Function used to calculate the new speed of the pawn, that doesn't exceed the maximum speed.
 void ASDTAIController::CalculateSpeed(APawn* pawn, float deltaTime) 
 {
 	_speed += deltaTime * GetCharacter()->GetCharacterMovement()->GetMaxAcceleration();
@@ -103,12 +97,14 @@ void ASDTAIController::CalculateSpeed(APawn* pawn, float deltaTime)
         _speed = _maxSpeed;
 }
 
+//Function that sets the pawn's speed.
 void ASDTAIController::SetSpeedVector(APawn* pawn, FVector dir) 
 {
     if (pawn)
         pawn->AddMovementInput(dir.GetSafeNormal(), _speed);
 }
 
+//Function that determines the next direction of the pawn while taking into consideration the pawn's surroundings.
 FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world) 
 {
 	FVector pawnRightVector = pawn->GetActorRightVector();
@@ -151,6 +147,7 @@ FVector ASDTAIController::GetNextDirection(APawn* pawn, UWorld* world)
 	return GetNextDirectionParallelToWorld(nextDir);
 }
 
+//Function that redirects the pawn to be parrallel to the world axes.
 FVector ASDTAIController::GetNextDirectionParallelToWorld(FVector direction) 
 {
 	float x = 0.0f;
@@ -165,33 +162,38 @@ FVector ASDTAIController::GetNextDirectionParallelToWorld(FVector direction)
 	return FVector(x, y, z);
 }
 
+//Function that rotates the pawn to the new calculated rotation.
 void ASDTAIController::RotatePawn(APawn* pawn, FRotator rotation) 
 {
     pawn->AddActorWorldRotation(rotation);
 }
 
+//Function that gets the rotator of the pawn for a given direction.
 FRotator ASDTAIController::GetRotatorFromDirection(APawn* pawn, FVector newDir) 
 {
     return newDir.ToOrientationRotator() - pawn->GetActorForwardVector().ToOrientationRotator();
 }
 
+//Function that casts a raycast to detect if a wall is present. 
 bool ASDTAIController::RayCast(APawn* pawn, UWorld* world, const FVector& start, const FVector& end) 
 {
     FHitResult hit;
     return world->LineTraceSingleByObjectType(hit, start, end, FCollisionObjectQueryParams().AllStaticObjects);
 }
 
+//Function that locates death traps, players and power ups.
 void ASDTAIController::LocateObjects(float deltaTime, APawn* pawn, UWorld* world)
 {
 	if (!LocateDeathTrap(pawn, world)) {
 		if (!LocatePlayer(deltaTime, pawn, world))
 			LocatePowerUp(pawn, world);
 	}
-	else {
-		UE_LOG(LogTemp, Log, TEXT("trap"));
-	}
+
 }
 
+//Function that locates if the player is in front of the pawn and if the player isn't powered up the pawn is put in the CHASING state.
+//If the player is powered up, the pawn is put in the ROTATING state.
+//if he is in the CHASING state and doesn't see the player anymore he is put in the WANDERING state.
 bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world) 
 {
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
@@ -238,6 +240,8 @@ bool ASDTAIController::LocatePlayer(float deltaTime, APawn* pawn, UWorld* world)
 	return false;
 }
 
+//Function called when the pawn is in the CHASING state. Changes the rotation and speed of the pawn to face the player it is chasing.
+//If the pawn locates a death trap, he is put in the WANDERING state.
 void ASDTAIController::ChasingPlayer(FVector playerLocation, float deltaTime, APawn* pawn, UWorld* world) 
 {
 	FVector toTarget = (playerLocation - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
@@ -254,6 +258,8 @@ void ASDTAIController::ChasingPlayer(FVector playerLocation, float deltaTime, AP
 		_currentState = WANDERING;
 }
 
+//Function called when the pawn is in the PICKING_POWERUP state. Changes the rotation and speed of the pawn to face the desired power up.
+//If the desired powerup is picked up by another actor, or if the pawn detects a death trap, he is put in the WANDERING state.
 void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world) 
 {
 	FVector toTarget = (_powerUp->GetActorLocation() - pawn->GetTargetLocation())*FVector(1.f, 1.f, 0.f);
@@ -263,19 +269,14 @@ void ASDTAIController::PickUpPowerUp(float deltaTime, APawn* pawn, UWorld* world
 	CalculateSpeed(pawn, deltaTime);
 	SetSpeedVector(pawn, pawn->GetActorForwardVector());
 
-	if (_powerUp->IsOnCooldown()) 
+	if (_powerUp->IsOnCooldown() || LocateDeathTrap(pawn, world))
 	{
 		_currentState = WANDERING;
 		_powerUp = nullptr;
 	}
-
-	if (LocateDeathTrap(pawn, world)) 
-	{
-		_currentState = WANDERING;
-		_powerUp = nullptr;
-	}	
 }
 
+//Function that locates a powerup in front of the pawn. If he finds one in front of him he is then put in the PICKING_POWERUP state.
 bool ASDTAIController::LocatePowerUp(APawn* pawn, UWorld* world)
 {
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
@@ -315,6 +316,8 @@ bool ASDTAIController::LocatePowerUp(APawn* pawn, UWorld* world)
 	return false;
 }
 
+//Function that locates death traps, if a death trap is found around the character, a new calculated direction that is perpendicular to the deathtrap is assigned to the pawn.
+//If a death trap is located the pawn is put in the WANDERING state.
 bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world) 
 {
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
@@ -339,6 +342,8 @@ bool ASDTAIController::LocateDeathTrap(APawn* pawn, UWorld* world)
 	return false;
 }
 
+//Function called when trying to determine which side to go to after colliding with a wall.
+//Locates death traps in a given direction of the pawn.
 bool ASDTAIController::LocateDeathTrapOnEachSide(APawn* pawn, UWorld* world, FVector direction) {
 	PhysicsHelpers physicsHelpers = GetPhysicsHelpers();
 
@@ -352,6 +357,7 @@ bool ASDTAIController::LocateDeathTrapOnEachSide(APawn* pawn, UWorld* world, FVe
 	return (hitDetected && outResult.Distance < 200.0f);
 }
 
+//Function that verifies if the target actor is in a cone in front of the pawn.
 bool ASDTAIController::IsInsideCone(APawn * pawn, AActor * targetActor) const
 {
 	FVector const toTarget = targetActor->GetActorLocation() - pawn->GetActorLocation();
@@ -359,12 +365,14 @@ bool ASDTAIController::IsInsideCone(APawn * pawn, AActor * targetActor) const
 	return std::abs(std::acos(FVector::DotProduct(pawnForward.GetSafeNormal(), toTarget.GetSafeNormal()))) < _visionAngle;
 }
 
+//Function that returns the physics helper.
 PhysicsHelpers ASDTAIController::GetPhysicsHelpers() 
 {
     UWorld* world = GetWorld();
     return PhysicsHelpers(world);
 }
 
+//Function that reinitialise the pawn once dead. 
 void ASDTAIController::OnPawnDeath() 
 {
 	_powerUp = nullptr;
@@ -372,12 +380,14 @@ void ASDTAIController::OnPawnDeath()
 	_agent->isRespawn = false;
 }
 
+//Function that validates the detection distance, the max speed and the acceleration of the pawn.
 void ASDTAIController::ValidateExposedParams() {
 	ValidateDetectionDist();
 	ValidateMaxSpeed();
 	ValidateAcceleration();
 }
 
+//Function that validates the detection distance of the pawn.
 void ASDTAIController::ValidateDetectionDist() {
 	if (_detectionDistance < 50.0f) {
 		_detectionDistance = 50.0f;
@@ -386,6 +396,7 @@ void ASDTAIController::ValidateDetectionDist() {
 	}
 }
 
+//Function that validates the max speed of the pawn.
 void ASDTAIController::ValidateMaxSpeed() {
 	if (_maxSpeed < 0.5f) {
 		_maxSpeed = 0.5f;
@@ -394,6 +405,7 @@ void ASDTAIController::ValidateMaxSpeed() {
 	}
 }
 
+//Function that validates the acceleration of the pawn.
 void ASDTAIController::ValidateAcceleration() {
 	if (GetCharacter()->GetCharacterMovement()->GetMaxAcceleration() < 150.0f) {
 		GetCharacter()->GetCharacterMovement()->MaxAcceleration = 150.0f;
@@ -402,6 +414,7 @@ void ASDTAIController::ValidateAcceleration() {
 	}
 }
 
+//Function that displays the autimatic test of the different pawns. This displays the number of pickups and death of a given pawn, as well as a timer since game start.
 void ASDTAIController::DisplayAutomaticTest()
 {
 	FTimespan clockedTime = UKismetMathLibrary::MakeTimespan(0, 0, 0, _trainingTimer, 0);

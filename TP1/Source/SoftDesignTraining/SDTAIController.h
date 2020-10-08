@@ -68,11 +68,11 @@ private:
 	void DisplayAutomaticTest();
 
 public:
-	// Constante servant à scale la vitesse maximale de l'AI. Elle doit avoir une valeur entre 0.5f et 1.0f.
+	//Constant used to scale the pawn's max speed. It has to be between 0.5f and 1.0f.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _maxSpeed = 1.0f;
 
-	// Constante servant à déterminer la distance à laquelle l'AI va détecter un mur. Elle doit avoir une valeur entre 50.0f et 300.0f.
+	//Constant used to determine the distance in which the pawn is able to detect walls in front of him. It has to be between 50.0f and 300.0f.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float _detectionDistance = 150.0f;
 
