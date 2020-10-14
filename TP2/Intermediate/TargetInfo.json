@@ -1,0 +1,14 @@
+{
+	"Targets": [
+		{
+			"Name": "SoftDesignTraining",
+			"Path": "C:\\Users\\meill\\Desktop\\Universite\\Automne2020\\LOG8235\\LOG8235\\TP2\\Source\\SoftDesignTraining.Target.cs",
+			"Type": "Game"
+		},
+		{
+			"Name": "SoftDesignTrainingEditor",
+			"Path": "C:\\Users\\meill\\Desktop\\Universite\\Automne2020\\LOG8235\\LOG8235\\TP2\\Source\\SoftDesignTrainingEditor.Target.cs",
+			"Type": "Editor"
+		}
+	]
+}

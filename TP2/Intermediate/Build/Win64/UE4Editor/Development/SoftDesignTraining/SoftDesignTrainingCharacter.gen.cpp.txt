@@ -1,0 +1,9 @@
+F:\LOG8235\LOG8235\TP2\Intermediate\Build\Win64\UE4Editor\Development\SoftDesignTraining\Definitions.SoftDesignTraining.h
+C:\Program Files\Epic Games\UE_4.25\Engine\Source\Runtime\CoreUObject\Public\UObject/GeneratedCppIncludes.h
+C:\Program Files\Epic Games\UE_4.25\Engine\Source\Runtime\CoreUObject\Public\UObject/MetaData.h
+F:\LOG8235\LOG8235\TP2\Source\SoftDesignTraining/SoftDesignTrainingCharacter.h
+C:\Program Files\Epic Games\UE_4.25\Engine\Source\Runtime\Engine\Classes\GameFramework/Character.h
+C:\Program Files\Epic Games\UE_4.25\Engine\Source\Runtime\Engine\Classes\GameFramework/RootMotionSource.h
+C:\Program Files\Epic Games\UE_4.25\Engine\Intermediate\Build\Win64\UE4Editor\Inc\Engine\RootMotionSource.generated.h
+C:\Program Files\Epic Games\UE_4.25\Engine\Intermediate\Build\Win64\UE4Editor\Inc\Engine\Character.generated.h
+F:\LOG8235\LOG8235\TP2\Intermediate\Build\Win64\UE4Editor\Inc\SoftDesignTraining\SoftDesignTrainingCharacter.generated.h
