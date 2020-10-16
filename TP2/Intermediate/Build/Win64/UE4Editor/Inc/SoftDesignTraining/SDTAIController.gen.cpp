@@ -82,7 +82,7 @@ void EmptyLinkFunctionForGeneratedCodeSDTAIController() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ASDTAIController_Statics::Class_MetaDataParams[] = {
 		{ "ClassGroupNames", "AI" },
-		{ "Comment", "/**\n * \n */" },
+		{ "Comment", "/**\n *\n */" },
 		{ "HideCategories", "Collision Rendering Utilities|Transformation" },
 		{ "IncludePath", "SDTAIController.h" },
 		{ "ModuleRelativePath", "SDTAIController.h" },
@@ -202,7 +202,7 @@ void EmptyLinkFunctionForGeneratedCodeSDTAIController() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(ASDTAIController, 2965554639);
+	IMPLEMENT_CLASS(ASDTAIController, 1872011205);
 	template<> SOFTDESIGNTRAINING_API UClass* StaticClass<ASDTAIController>()
 	{
 		return ASDTAIController::StaticClass();

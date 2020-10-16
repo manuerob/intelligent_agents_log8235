@@ -4,6 +4,8 @@
 #include "SoftDesignTraining.h"
 #include "SDTCollectible.h"
 #include "SDTFleeLocation.h"
+#include <NavigationSystem.h>
+#include <NavigationPath.h>
 #include "SDTPathFollowingComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -16,9 +18,44 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+AActor* ASDTAIController::GetClosestCollectible(APawn* pawn, TArray < AActor* > actors) {
+    AActor* closestActor = NULL;
+    float minDist = MAX_FLT;
+ 
+    while (actors.Num() > 0) {
+        AActor* actor = actors.Pop();
+
+        if (FVector::DistXY(pawn->GetActorLocation(), actor->GetActorLocation()) < minDist) {
+            if (!static_cast<ASDTCollectible*>(actor)->IsOnCooldown()) {
+                closestActor = actor;
+                minDist = FVector::DistXY(pawn->GetActorLocation(), closestActor->GetActorLocation());
+            }
+        }
+    }
+    return closestActor;
+}
+
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
     //Move to target depending on current behavior
+    UWorld* const world = GetWorld();
+    APawn* pawn = GetPawn();
+    TArray < AActor* > OutActors;
+    UGameplayStatics::GetAllActorsOfClass(world, ASDTCollectible::StaticClass(), OutActors);
+    AActor* actor = GetClosestCollectible(pawn, OutActors);
+    FVector location = actor->GetActorLocation();
+    UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), location);
+    TArray<FNavPathPoint> points = path->GetPath()->GetPathPoints();
+    FVector start = pawn->GetActorLocation();
+    for (FNavPathPoint p : points) {
+        
+        DrawDebugLine(world, start,p.Location, FColor::Black);
+        start = p.Location;
+    }
+    FNavPathPoint point = points[1];
+    FVector direction = point.Location - pawn->GetActorLocation();
+
+    pawn->AddMovementInput(direction, 1.0f);
 }
 
 void ASDTAIController::OnMoveToTarget()
