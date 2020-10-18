@@ -57,5 +57,6 @@ private:
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
     virtual void ShowNavigationPath() override;
-    AActor* GetClosestCollectible(APawn* pawn, TArray < AActor* > actors);
+    AActor* GetClosestCollectible(APawn* pawn, TArray<AActor*> actors);
+    bool VerifyCollectibleCooldown(TArray<AActor*> collectibles, FNavPathPoint collectionLocation);
 };

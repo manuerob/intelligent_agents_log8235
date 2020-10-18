@@ -13,11 +13,29 @@ USDTPathFollowingComponent::USDTPathFollowingComponent(const FObjectInitializer&
 
 }
 
+void USDTPathFollowingComponent::SetPath(FNavPathSharedPtr path) {
+    Path = path;
+}
+
+void USDTPathFollowingComponent::ResetMove() {
+    Path = NULL;
+    MoveSegmentStartIndex = 0;
+}
+
 void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
 {
     const TArray<FNavPathPoint>& points = Path->GetPathPoints();
+    if (MoveSegmentStartIndex+1 >= points.Num()) {
+        destination = points.Last();
+        ResetMove();
+        return;
+    }
+    for (int i = 0; i < points.Num(); ++i) {
+    }
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
+    const FNavPathPoint& segmentEnd = points[MoveSegmentStartIndex + 1];
 
+    
     if (SDTUtils::HasJumpFlag(segmentStart))
     {
         //update jump
@@ -25,6 +43,8 @@ void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
     else
     {
         //update navigation along path
+        destination = segmentEnd.Location - GetCurrentNavLocation().Location;
+        
     }
 }
 
@@ -33,7 +53,6 @@ void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
     Super::SetMoveSegment(segmentStartIndex);
 
     const TArray<FNavPathPoint>& points = Path->GetPathPoints();
-
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
 
     if (SDTUtils::HasJumpFlag(segmentStart) && FNavMeshNodeFlags(segmentStart.Flags).IsNavLink())
@@ -43,6 +62,14 @@ void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
     else
     {
         //Handle normal segments
+        FVector2D position2D(GetCurrentNavLocation().Location);
+        FVector2D destination2D(points[MoveSegmentStartIndex+1]);
+        if (position2D.Equals(destination2D, 10.f)) {
+            MoveSegmentStartIndex++;
+        }
     }
 }
 
+int32 USDTPathFollowingComponent::GetMoveSegmentStartIndex() {
+    return MoveSegmentStartIndex;
+}

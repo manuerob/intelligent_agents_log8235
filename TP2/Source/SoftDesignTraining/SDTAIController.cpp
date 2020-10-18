@@ -21,7 +21,7 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 AActor* ASDTAIController::GetClosestCollectible(APawn* pawn, TArray < AActor* > actors) {
     AActor* closestActor = NULL;
     float minDist = MAX_FLT;
- 
+    
     while (actors.Num() > 0) {
         AActor* actor = actors.Pop();
 
@@ -35,27 +35,39 @@ AActor* ASDTAIController::GetClosestCollectible(APawn* pawn, TArray < AActor* > 
     return closestActor;
 }
 
+bool ASDTAIController::VerifyCollectibleCooldown(TArray<AActor*> collectibles, FNavPathPoint collectionLocation) {
+    for (AActor* collectible : collectibles) {
+        float dist = FVector::DistXY(collectionLocation.Location, static_cast<ASDTCollectible*>(collectible)->GetActorLocation());
+        if (dist < 1.f) {
+            UE_LOG(LogTemp, Log, TEXT("ChangeCollectible"));
+            return static_cast<ASDTCollectible*>(collectible)->IsOnCooldown();
+        }
+    }
+    return false;
+}
+
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
     //Move to target depending on current behavior
     UWorld* const world = GetWorld();
     APawn* pawn = GetPawn();
+    USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
     TArray < AActor* > OutActors;
     UGameplayStatics::GetAllActorsOfClass(world, ASDTCollectible::StaticClass(), OutActors);
-    AActor* actor = GetClosestCollectible(pawn, OutActors);
-    FVector location = actor->GetActorLocation();
-    UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), location);
-    TArray<FNavPathPoint> points = path->GetPath()->GetPathPoints();
-    FVector start = pawn->GetActorLocation();
-    for (FNavPathPoint p : points) {
-        
-        DrawDebugLine(world, start,p.Location, FColor::Black);
-        start = p.Location;
-    }
-    FNavPathPoint point = points[1];
-    FVector direction = point.Location - pawn->GetActorLocation();
 
-    pawn->AddMovementInput(direction, 1.0f);
+    if (!pf->GetPath() || pf->GetPath() == NULL || VerifyCollectibleCooldown(OutActors, pf->GetPath()->GetPathPoints().Last())) {
+        
+        AActor* actor = GetClosestCollectible(pawn, OutActors);
+        pf->ResetMove();
+        FVector location = actor->GetActorLocation();
+        UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), location);
+        pf->SetPath(path->GetPath());
+        
+    }
+    ShowNavigationPath();
+    pf->SetMoveSegment(pf->GetMoveSegmentStartIndex());
+    pf->FollowPathSegment(deltaTime);
+    pawn->AddMovementInput(pf->destination, 0.1f);
 }
 
 void ASDTAIController::OnMoveToTarget()
@@ -73,6 +85,14 @@ void ASDTAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollow
 void ASDTAIController::ShowNavigationPath()
 {
     //Show current navigation path DrawDebugLine and DrawDebugSphere
+    USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
+    const TArray<FNavPathPoint>& points = pf->GetPath()->GetPathPoints();
+    FVector start = GetPawn()->GetActorLocation();
+    for (int i = pf->GetMoveSegmentStartIndex()+1; i < points.Num(); ++i) {
+        DrawDebugLine(GetWorld(), start, points[i].Location, FColor::Black);
+        start = points[i].Location;
+    }
+
 }
 
 void ASDTAIController::ChooseBehavior(float deltaTime)

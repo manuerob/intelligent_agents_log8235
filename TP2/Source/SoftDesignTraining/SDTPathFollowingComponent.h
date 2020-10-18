@@ -17,4 +17,8 @@ class SOFTDESIGNTRAINING_API USDTPathFollowingComponent : public UPathFollowingC
 public:
     virtual void FollowPathSegment(float deltaTime) override;
     virtual void SetMoveSegment(int32 segmentStartIndex) override;
+    void SetPath(FNavPathSharedPtr path);
+    void ResetMove();
+    int32 GetMoveSegmentStartIndex();
+    FVector destination;
 };
