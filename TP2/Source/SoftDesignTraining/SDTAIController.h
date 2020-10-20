@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SDTBaseAIController.h"
+#include "SoftDesignTrainingMainCharacter.h"
 #include "SDTAIController.generated.h"
 
 /**
@@ -44,9 +45,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
         bool Landing = false;
 
+	
+
 public:
     virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
     void AIStateInterrupted();
+	bool isPlayer = false;
 
 protected:
     void OnMoveToTarget();
@@ -54,9 +58,14 @@ protected:
     void UpdatePlayerInteraction(float deltaTime);
 
 private:
+	AActor* _targetActor;
+	ASoftDesignTrainingMainCharacter* _player = nullptr;
+	FVector _actorPos;
+
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
     virtual void ShowNavigationPath() override;
+	virtual void GoToSelectedTarget(float deltaTime) override;
     AActor* GetClosestCollectible(APawn* pawn, TArray<AActor*> actors);
     bool VerifyCollectibleCooldown(TArray<AActor*> collectibles, FNavPathPoint collectionLocation);
 };

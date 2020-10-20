@@ -28,4 +28,5 @@ private:
     virtual void GoToBestTarget(float deltaTime) {};
     virtual void ChooseBehavior(float deltaTime) {};
     virtual void ShowNavigationPath() {};
+	virtual void GoToSelectedTarget(float deltaTime) {};
 };

@@ -2,6 +2,7 @@
 
 #include "SDTBaseAIController.h"
 #include "SoftDesignTraining.h"
+#include "SoftDesignTrainingCharacter.h"
 
 
 ASDTBaseAIController::ASDTBaseAIController(const FObjectInitializer& ObjectInitializer)
@@ -25,6 +26,7 @@ void ASDTBaseAIController::Tick(float deltaTime)
     else
     {
         ShowNavigationPath();
+		GoToSelectedTarget(deltaTime);
     }
 }
 

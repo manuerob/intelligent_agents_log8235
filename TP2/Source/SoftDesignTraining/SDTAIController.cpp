@@ -52,22 +52,22 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
     UWorld* const world = GetWorld();
     APawn* pawn = GetPawn();
     USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
-    TArray < AActor* > OutActors;
-    UGameplayStatics::GetAllActorsOfClass(world, ASDTCollectible::StaticClass(), OutActors);
+    //TArray < AActor* > OutActors;
+    //UGameplayStatics::GetAllActorsOfClass(world, ASDTCollectible::StaticClass(), OutActors);
 
-    if (!pf->GetPath() || pf->GetPath() == NULL || VerifyCollectibleCooldown(OutActors, pf->GetPath()->GetPathPoints().Last())) {
+    if ((!pf->GetPath() || pf->GetPath() == NULL) && _targetActor != NULL) {
         
-        AActor* actor = GetClosestCollectible(pawn, OutActors);
+        //AActor* actor = GetClosestCollectible(pawn, OutActors);
         pf->ResetMove();
-        FVector location = actor->GetActorLocation();
-        UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), location);
+        UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), _actorPos);
         pf->SetPath(path->GetPath());
-        
+
+		//m_ReachedTarget = false;
     }
-    ShowNavigationPath();
-    pf->SetMoveSegment(pf->GetMoveSegmentStartIndex());
-    pf->FollowPathSegment(deltaTime);
-    pawn->AddMovementInput(pf->destination, 0.1f);
+	ShowNavigationPath();
+	pf->SetMoveSegment(pf->GetMoveSegmentStartIndex());
+	pf->FollowPathSegment(deltaTime);
+	pawn->AddMovementInput(pf->destination, 0.1f);
 }
 
 void ASDTAIController::OnMoveToTarget()
@@ -92,7 +92,19 @@ void ASDTAIController::ShowNavigationPath()
         DrawDebugLine(GetWorld(), start, points[i].Location, FColor::Black);
         start = points[i].Location;
     }
+}
+	
+void ASDTAIController::GoToSelectedTarget(float deltaTime) {
+	UWorld* const world = GetWorld();
+	APawn* pawn = GetPawn();
+	USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
 
+	if (!(!pf->GetPath() || pf->GetPath() == NULL)) {
+		pf->SetMoveSegment(pf->GetMoveSegmentStartIndex());
+		pf->FollowPathSegment(deltaTime);
+		GetPawn()->AddMovementInput(pf->destination, 0.1f);
+
+	}
 }
 
 void ASDTAIController::ChooseBehavior(float deltaTime)
@@ -127,6 +139,37 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
 
+	
+
+	if (isPlayer && (!detectionHit.GetActor() || detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE)) {
+		float delta = FVector::Dist(GetPawn()->GetActorLocation(), _actorPos);
+		UE_LOG(LogTemp, Log, TEXT("%f"), delta);
+		if (delta < 10.0) {
+			isPlayer = false;
+		}
+		
+		if (_player->isDead) {
+			_player->isDead = false;
+			isPlayer = false;
+		}
+	}
+	else if (detectionHit.GetActor()) {
+		_targetActor = detectionHit.GetActor();
+		_actorPos = detectionHit.GetActor()->GetActorLocation();
+		if (detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_PLAYER) {
+			isPlayer = true;
+			_player = static_cast<ASoftDesignTrainingMainCharacter*>(detectionHit.GetActor());
+		}
+	}
+	else {
+		TArray < AActor* > OutActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), OutActors);
+		_targetActor = GetClosestCollectible(GetPawn(), OutActors);
+		_actorPos = _targetActor->GetActorLocation();
+	}
+
+	
+
     //Set behavior based on hit
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
@@ -140,13 +183,18 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
         {
             if (component->GetCollisionObjectType() == COLLISION_PLAYER)
             {
-                //we can't get more important than the player
-                outDetectionHit = hit;
-                return;
+				FHitResult raycastHit;
+				if (!GetWorld()->LineTraceSingleByObjectType(raycastHit, GetPawn()->GetActorLocation(), hit.GetActor()->GetActorLocation(), FCollisionObjectQueryParams().AllStaticObjects))
+				{
+					//we can't get more important than the player
+					outDetectionHit = hit;
+					return;
+				}
             }
             else if (component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
             {
-                outDetectionHit = hit;
+				if (!static_cast<ASDTCollectible*>(hit.GetActor())->IsOnCooldown())
+					outDetectionHit = hit;
             }
         }
     }
