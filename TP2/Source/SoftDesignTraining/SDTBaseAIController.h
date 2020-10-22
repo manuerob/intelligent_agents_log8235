@@ -24,9 +24,11 @@ protected:
     virtual void ImpulseToDirection(float deltaTime) {};
 
     bool m_ReachedTarget;
+	bool m_FoundPlayer = false;
 private:
     virtual void GoToBestTarget(float deltaTime) {};
     virtual void ChooseBehavior(float deltaTime) {};
     virtual void ShowNavigationPath() {};
 	virtual void GoToSelectedTarget(float deltaTime) {};
+	virtual bool GetPlayer() { return false; };
 };

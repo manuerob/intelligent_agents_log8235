@@ -61,11 +61,13 @@ private:
 	AActor* _targetActor;
 	ASoftDesignTrainingMainCharacter* _player = nullptr;
 	FVector _actorPos;
+	enum ActorType { COLLECTIBLE, FLEE_LOCATION };
 
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
     virtual void ShowNavigationPath() override;
 	virtual void GoToSelectedTarget(float deltaTime) override;
-    AActor* GetClosestCollectible(APawn* pawn, TArray<AActor*> actors);
+    AActor* GetClosestActor(APawn* pawn, TArray<AActor*> actors, ActorType actorType);
     bool VerifyCollectibleCooldown(TArray<AActor*> collectibles, FNavPathPoint collectionLocation);
+	virtual bool GetPlayer() override;
 };

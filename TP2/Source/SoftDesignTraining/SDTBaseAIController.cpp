@@ -17,6 +17,11 @@ void ASDTBaseAIController::Tick(float deltaTime)
 {
     Super::Tick(deltaTime);
 
+	if (!m_FoundPlayer) 
+	{
+		m_FoundPlayer = GetPlayer();
+	}
+
     ChooseBehavior(deltaTime);
 
     if (m_ReachedTarget)
