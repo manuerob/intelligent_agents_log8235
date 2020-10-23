@@ -39,6 +39,7 @@ void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
     if (SDTUtils::HasJumpFlag(segmentStart))
     {
         //update jump
+        UE_LOG(LogTemp, Log, TEXT("Jump1"));
     }
     else
     {
@@ -58,6 +59,7 @@ void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
     if (SDTUtils::HasJumpFlag(segmentStart) && FNavMeshNodeFlags(segmentStart.Flags).IsNavLink())
     {
         //Handle starting jump
+        UE_LOG(LogTemp, Log, TEXT("Jump2"));
     }
     else
     {
