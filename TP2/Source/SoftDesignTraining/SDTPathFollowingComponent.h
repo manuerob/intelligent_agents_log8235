@@ -21,4 +21,5 @@ public:
     void ResetMove();
     int32 GetMoveSegmentStartIndex();
     FVector destination;
+    bool JumpFlag = false;
 };

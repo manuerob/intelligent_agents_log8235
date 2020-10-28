@@ -18,6 +18,12 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+void ASDTAIController::BeginPlay() {
+	Super::BeginPlay();
+
+	UE_LOG(LogTemp, Log, TEXT("BeginPlay"));
+}
+
 AActor* ASDTAIController::GetClosestActor(APawn* pawn, TArray < AActor* > actors, ActorType actorType) {
     AActor* closestActor = NULL;
     float minDist = MAX_FLT;
@@ -56,24 +62,44 @@ bool ASDTAIController::VerifyCollectibleCooldown(TArray<AActor*> collectibles, F
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
     //Move to target depending on current behavior
-    UWorld* const world = GetWorld();
-    APawn* pawn = GetPawn();
-    USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
-    //TArray < AActor* > OutActors;
-    //UGameplayStatics::GetAllActorsOfClass(world, ASDTCollectible::StaticClass(), OutActors);
 
-    //if ((!pf->GetPath() || pf->GetPath() == NULL) && _targetActor != NULL) {
-        //AActor* actor = GetClosestCollectible(pawn, OutActors);
-        pf->ResetMove();
-        UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), _actorPos);
-        pf->SetPath(path->GetPath());
+	APawn* pawn = GetPawn();
+	USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
 
-		//m_ReachedTarget = false;
-    //}
-	ShowNavigationPath();
-	pf->SetMoveSegment(pf->GetMoveSegmentStartIndex());
-	pf->FollowPathSegment(deltaTime);
-	pawn->AddMovementInput(pf->destination, 0.1f);
+	if (InAir) {
+		FVector pawnLocation = pawn->GetActorLocation();
+		jumpTime += deltaTime;
+		// UE_LOG(LogTemp, Log, TEXT("%f"), jumpTime);
+		float maxDeltaHeight = JumpApexHeight - baseHeight;
+		float curveValue = JumpCurve->GetFloatValue(jumpTime);
+		float deltaHeight = maxDeltaHeight * curveValue;
+		// UE_LOG(LogTemp, Log, TEXT("(%f, %f, %f, %f)"), jumpTime, curveValue, deltaHeight, maxDeltaHeight);
+		pawn->AddMovementInput(pf->destination, JumpSpeed);
+		pawn->SetActorLocation(FVector(pawnLocation.X, pawnLocation.Y, baseHeight + deltaHeight));
+		if (deltaHeight < 0.001) {
+			// UE_LOG(LogTemp, Log, TEXT("Landing"));
+			InAir = false;
+			jumpTime = 0.25f;
+		}
+	}
+	else {
+		UWorld* const world = GetWorld();
+		pf->ResetMove();
+		UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), _actorPos);
+		pf->SetPath(path->GetPath());
+
+		ShowNavigationPath();
+		GoToSelectedTarget(deltaTime);
+		UpdateJumpStatus();
+	}
+}
+
+void ASDTAIController::UpdateJumpStatus() {
+	USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
+
+	if (pf->JumpFlag) {
+		InAir = true;
+	}
 }
 
 void ASDTAIController::OnMoveToTarget()
@@ -94,7 +120,7 @@ void ASDTAIController::ShowNavigationPath()
     USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
     const TArray<FNavPathPoint>& points = pf->GetPath()->GetPathPoints();
     FVector start = GetPawn()->GetActorLocation();
-    for (int i = pf->GetMoveSegmentStartIndex()+1; i < points.Num(); ++i) {
+    for (int i = pf->GetMoveSegmentStartIndex(); i < points.Num(); ++i) {
         DrawDebugLine(GetWorld(), start, points[i].Location, FColor::Black);
         start = points[i].Location;
     }
@@ -108,7 +134,7 @@ void ASDTAIController::GoToSelectedTarget(float deltaTime) {
 	if (!(!pf->GetPath() || pf->GetPath() == NULL)) {
 		pf->SetMoveSegment(pf->GetMoveSegmentStartIndex());
 		pf->FollowPathSegment(deltaTime);
-		GetPawn()->AddMovementInput(pf->destination, 0.1f);
+		GetPawn()->AddMovementInput(pf->destination, 1.0f);
 
 	}
 }

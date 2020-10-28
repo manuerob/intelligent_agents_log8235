@@ -25,13 +25,13 @@ void USDTPathFollowingComponent::ResetMove() {
 void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
 {
     const TArray<FNavPathPoint>& points = Path->GetPathPoints();
-    if (MoveSegmentStartIndex+1 >= points.Num()) {
+
+    if (MoveSegmentStartIndex + 1 >= points.Num()) {
         destination = points.Last();
         ResetMove();
         return;
     }
-    for (int i = 0; i < points.Num(); ++i) {
-    }
+
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
     const FNavPathPoint& segmentEnd = points[MoveSegmentStartIndex + 1];
 
@@ -39,14 +39,14 @@ void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
     if (SDTUtils::HasJumpFlag(segmentStart))
     {
         //update jump
-        UE_LOG(LogTemp, Log, TEXT("Jump1"));
+        JumpFlag = true;
     }
     else
     {
         //update navigation along path
-        destination = segmentEnd.Location - GetCurrentNavLocation().Location;
-        
+        JumpFlag = false;
     }
+    destination = (segmentEnd.Location - GetCurrentNavLocation().Location).GetSafeNormal();
 }
 
 void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
@@ -56,16 +56,20 @@ void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
     const TArray<FNavPathPoint>& points = Path->GetPathPoints();
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
 
-    if (SDTUtils::HasJumpFlag(segmentStart) && FNavMeshNodeFlags(segmentStart.Flags).IsNavLink())
+    if (MoveSegmentStartIndex + 1 >= points.Num()) {
+        return;
+    }
+
+    if (SDTUtils::HasJumpFlag(segmentStart))
     {
         //Handle starting jump
-        UE_LOG(LogTemp, Log, TEXT("Jump2"));
+        UE_LOG(LogTemp, Log, TEXT("SetMoveSegment Jump"));
     }
     else
     {
         //Handle normal segments
         FVector2D position2D(GetCurrentNavLocation().Location);
-        FVector2D destination2D(points[MoveSegmentStartIndex+1]);
+        FVector2D destination2D(points[MoveSegmentStartIndex + 1]);
         if (position2D.Equals(destination2D, 10.f)) {
             MoveSegmentStartIndex++;
         }

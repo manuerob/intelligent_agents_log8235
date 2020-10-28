@@ -50,6 +50,7 @@ public:
 public:
     virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
     void AIStateInterrupted();
+    virtual void BeginPlay() override;
 	bool isPlayer = false;
 
 protected:
@@ -62,6 +63,8 @@ private:
 	ASoftDesignTrainingMainCharacter* _player = nullptr;
 	FVector _actorPos;
 	enum ActorType { COLLECTIBLE, FLEE_LOCATION };
+    float jumpTime = 0.25f;
+    float baseHeight = 216.0f;
 
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
@@ -70,4 +73,5 @@ private:
     AActor* GetClosestActor(APawn* pawn, TArray<AActor*> actors, ActorType actorType);
     bool VerifyCollectibleCooldown(TArray<AActor*> collectibles, FNavPathPoint collectionLocation);
 	virtual bool GetPlayer() override;
+    void UpdateJumpStatus();
 };
