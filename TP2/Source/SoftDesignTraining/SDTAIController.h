@@ -44,7 +44,6 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
         bool Landing = false;
-
 	
 
 public:

@@ -2,12 +2,12 @@
 	"Targets": [
 		{
 			"Name": "SoftDesignTraining",
-			"Path": "C:\\Users\\chini\\Documents\\Poly\\2020AUT\\LOG8235\\LOG8235\\TP2\\Source\\SoftDesignTraining.Target.cs",
+			"Path": "C:\\Users\\emman\\OneDrive\\Desktop\\test\\LOG8235\\TP2\\Source\\SoftDesignTraining.Target.cs",
 			"Type": "Game"
 		},
 		{
 			"Name": "SoftDesignTrainingEditor",
-			"Path": "C:\\Users\\chini\\Documents\\Poly\\2020AUT\\LOG8235\\LOG8235\\TP2\\Source\\SoftDesignTrainingEditor.Target.cs",
+			"Path": "C:\\Users\\emman\\OneDrive\\Desktop\\test\\LOG8235\\TP2\\Source\\SoftDesignTrainingEditor.Target.cs",
 			"Type": "Editor"
 		}
 	]
