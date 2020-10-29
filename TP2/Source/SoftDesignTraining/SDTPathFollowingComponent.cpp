@@ -47,6 +47,7 @@ void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
         JumpFlag = false;
     }
     destination = (segmentEnd.Location - GetCurrentNavLocation().Location).GetSafeNormal();
+    endLocation = segmentEnd.Location;
 }
 
 void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
@@ -60,10 +61,11 @@ void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
         return;
     }
 
-    if (SDTUtils::HasJumpFlag(segmentStart))
+    if (SDTUtils::HasJumpFlag(segmentStart) && FNavMeshNodeFlags(segmentStart.Flags).IsNavLink())
     {
         //Handle starting jump
         UE_LOG(LogTemp, Log, TEXT("SetMoveSegment Jump"));
+
     }
     else
     {

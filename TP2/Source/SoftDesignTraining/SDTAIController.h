@@ -63,7 +63,11 @@ private:
 	ASoftDesignTrainingMainCharacter* _player = nullptr;
 	FVector _actorPos;
 	enum ActorType { COLLECTIBLE, FLEE_LOCATION };
-    float jumpTime = 0.25f;
+    float currentJumpTime = 0.0f;
+    float totalJumpTime = 0.0f;
+    float deltaXYJump = 0.0f;
+    float n = 0.0f;
+    bool  jumpAxeX = true;
     float baseHeight = 216.0f;
 
     virtual void GoToBestTarget(float deltaTime) override;
