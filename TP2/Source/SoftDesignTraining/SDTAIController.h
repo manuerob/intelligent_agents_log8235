@@ -63,12 +63,6 @@ private:
 	ASoftDesignTrainingMainCharacter* _player = nullptr;
 	FVector _actorPos;
 	enum ActorType { COLLECTIBLE, FLEE_LOCATION };
-    float currentJumpTime = 0.0f;
-    float totalJumpTime = 0.0f;
-    float deltaXYJump = 0.0f;
-    float n = 0.0f;
-    bool  jumpAxeX = true;
-    float baseHeight = 216.0f;
 
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
@@ -77,5 +71,17 @@ private:
     AActor* GetClosestActor(APawn* pawn, TArray<AActor*> actors, ActorType actorType);
     bool VerifyCollectibleCooldown(TArray<AActor*> collectibles, FNavPathPoint collectionLocation);
 	virtual bool GetPlayer() override;
-    void UpdateJumpStatus();
+
+    // Jump
+    float baseHeight = 0.0f;
+    float currentJumpTime = 0.0f;
+    float totalJumpTime = 0.0f;
+    FVector jumpDirection;
+    float maxDeltaHeight = 0.0f;
+    FVector startingJumpPos;
+    FVector endingJumpPos;
+
+    void Jump(float deltaTime);
+    void PrepareJump(float deltaTime);
+    void UpdateJump(float deltaTime);
 };

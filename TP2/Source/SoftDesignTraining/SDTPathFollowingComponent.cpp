@@ -34,7 +34,6 @@ void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
 
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
     const FNavPathPoint& segmentEnd = points[MoveSegmentStartIndex + 1];
-
     
     if (SDTUtils::HasJumpFlag(segmentStart))
     {
@@ -64,8 +63,6 @@ void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
     if (SDTUtils::HasJumpFlag(segmentStart) && FNavMeshNodeFlags(segmentStart.Flags).IsNavLink())
     {
         //Handle starting jump
-        UE_LOG(LogTemp, Log, TEXT("SetMoveSegment Jump"));
-
     }
     else
     {

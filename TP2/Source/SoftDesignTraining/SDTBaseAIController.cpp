@@ -23,16 +23,7 @@ void ASDTBaseAIController::Tick(float deltaTime)
 	}
 
     ChooseBehavior(deltaTime);
-
-    if (m_ReachedTarget)
-    {
-        GoToBestTarget(deltaTime);
-    }
-    else
-    {
-        ShowNavigationPath();
-		GoToSelectedTarget(deltaTime);
-    }
+    GoToBestTarget(deltaTime);
 }
 
 
