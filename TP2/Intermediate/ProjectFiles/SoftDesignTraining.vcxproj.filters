@@ -3,7 +3,11 @@
   <ItemGroup>
     <None Include="..\..\SoftDesignTraining.uproject" />
     <Filter Include="Source">
+<<<<<<< HEAD
       <UniqueIdentifier>{E69A6BB7-B0A3-4616-AF6F-D53D1FC242EB}</UniqueIdentifier>
+=======
+      <UniqueIdentifier>{364674A8-9B9E-4422-B032-838B942D7796}</UniqueIdentifier>
+>>>>>>> run_anim
     </Filter>
     <None Include="..\..\Source\SoftDesignTraining.Target.cs">
       <Filter>Source</Filter>
@@ -12,7 +16,11 @@
       <Filter>Source</Filter>
     </None>
     <Filter Include="Config">
+<<<<<<< HEAD
       <UniqueIdentifier>{5FED64C0-DE72-4BAB-8F7A-1C9A6F9473DD}</UniqueIdentifier>
+=======
+      <UniqueIdentifier>{6DF65D61-0077-4F3D-B84F-D98265CE0E9B}</UniqueIdentifier>
+>>>>>>> run_anim
     </Filter>
     <None Include="..\..\Config\DefaultEditor.ini">
       <Filter>Config</Filter>
@@ -30,7 +38,11 @@
       <Filter>Config</Filter>
     </None>
     <Filter Include="Source\SoftDesignTraining">
+<<<<<<< HEAD
       <UniqueIdentifier>{D0B9E0F6-A03F-4269-8AE4-11EEEE4C6154}</UniqueIdentifier>
+=======
+      <UniqueIdentifier>{6D762DE6-34EA-4FD1-B49D-F1AA5A7A6A7F}</UniqueIdentifier>
+>>>>>>> run_anim
     </Filter>
     <ClCompile Include="..\..\Source\SoftDesignTraining\FleeLocation.cpp">
       <Filter>Source\SoftDesignTraining</Filter>

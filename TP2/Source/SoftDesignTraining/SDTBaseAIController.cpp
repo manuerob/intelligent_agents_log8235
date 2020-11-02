@@ -17,9 +17,11 @@ void ASDTBaseAIController::Tick(float deltaTime)
 {
     Super::Tick(deltaTime);
 
+    RunSpeed = GetPawn()->GetVelocity().Size();
+
 	if (!m_FoundPlayer) 
 	{
-		m_FoundPlayer = GetPlayer();
+        m_FoundPlayer = GetPlayer();
 	}
 
     ChooseBehavior(deltaTime);

@@ -16,6 +16,9 @@ class SOFTDESIGNTRAINING_API ASDTBaseAIController : public AAIController
 
 public:
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
+        float RunSpeed = 1.f;
+
     ASDTBaseAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
     virtual void Tick(float deltaTime) override;
 	
