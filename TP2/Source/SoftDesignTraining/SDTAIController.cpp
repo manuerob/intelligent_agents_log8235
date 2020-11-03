@@ -52,7 +52,6 @@ bool ASDTAIController::VerifyCollectibleCooldown(TArray<AActor*> collectibles, F
     for (AActor* collectible : collectibles) {
         float dist = FVector::DistXY(collectionLocation.Location, static_cast<ASDTCollectible*>(collectible)->GetActorLocation());
         if (dist < 1.f) {
-            UE_LOG(LogTemp, Log, TEXT("ChangeCollectible"));
             return static_cast<ASDTCollectible*>(collectible)->IsOnCooldown();
         }
     }
@@ -210,12 +209,11 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
 
 	if (playerCharacter) {
-	
+
 		if (!(_player->IsPoweredUp()))
 		{
 			if (isPlayer && (!detectionHit.GetActor() || detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE)) {
 				float delta = FVector::Dist(GetPawn()->GetActorLocation(), _actorPos);
-				//UE_LOG(LogTemp, Log, TEXT("%f"), delta);
 				if (delta < 10.0) {
 					isPlayer = false;
 				}
@@ -243,6 +241,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 			TArray < AActor* > OutActors;
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTFleeLocation::StaticClass(), OutActors);
 			_targetActor = GetClosestActor(GetPawn(), OutActors, ActorType::FLEE_LOCATION);
+			isPlayer = false;
 		}
 	}
 	else {
