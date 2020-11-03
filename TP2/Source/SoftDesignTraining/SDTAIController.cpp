@@ -151,7 +151,6 @@ void ASDTAIController::GoToSelectedTarget(float deltaTime) {
 	}
 
 	AtJumpSegment = pf->JumpFlag;
-	UE_LOG(LogTemp, Log, TEXT("%f"), AtJumpSegment);
 }
 
 void ASDTAIController::OnMoveToTarget()
