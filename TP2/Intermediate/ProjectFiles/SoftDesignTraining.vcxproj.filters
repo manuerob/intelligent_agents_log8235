@@ -3,7 +3,7 @@
   <ItemGroup>
     <None Include="..\..\SoftDesignTraining.uproject" />
     <Filter Include="Source">
-      <UniqueIdentifier>{321071FB-B973-40ED-8D74-59F28188B74F}</UniqueIdentifier>
+      <UniqueIdentifier>{57CAEC85-3EDB-48F6-B0DA-1D3A14C00E63}</UniqueIdentifier>
     </Filter>
     <None Include="..\..\Source\SoftDesignTraining.Target.cs">
       <Filter>Source</Filter>
@@ -12,7 +12,7 @@
       <Filter>Source</Filter>
     </None>
     <Filter Include="Config">
-      <UniqueIdentifier>{2DEBD766-C12C-4989-966A-242DB80D1AA5}</UniqueIdentifier>
+      <UniqueIdentifier>{BB4C9397-D2CC-4C68-A118-39DC41B9A370}</UniqueIdentifier>
     </Filter>
     <None Include="..\..\Config\DefaultEditor.ini">
       <Filter>Config</Filter>
@@ -30,7 +30,7 @@
       <Filter>Config</Filter>
     </None>
     <Filter Include="Source\SoftDesignTraining">
-      <UniqueIdentifier>{FA38D952-36E7-46B8-AEBC-E80961EFAB89}</UniqueIdentifier>
+      <UniqueIdentifier>{2CEF2A7F-24DE-4C7D-8274-F79D8212ED04}</UniqueIdentifier>
     </Filter>
     <ClCompile Include="..\..\Source\SoftDesignTraining\FleeLocation.cpp">
       <Filter>Source\SoftDesignTraining</Filter>
