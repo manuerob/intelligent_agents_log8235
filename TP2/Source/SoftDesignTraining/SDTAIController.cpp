@@ -151,6 +151,7 @@ void ASDTAIController::GoToSelectedTarget(float deltaTime) {
 	}
 
 	AtJumpSegment = pf->JumpFlag;
+	UE_LOG(LogTemp, Log, TEXT("%f"), AtJumpSegment);
 }
 
 void ASDTAIController::OnMoveToTarget()
@@ -192,9 +193,9 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     if (!selfPawn)
         return;
 
-    ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-    if (!playerCharacter)
-        return;
+	ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    //if (!playerCharacter)
+      //  return;
 
     FVector detectionStartLocation = selfPawn->GetActorLocation() + selfPawn->GetActorForwardVector() * m_DetectionCapsuleForwardStartingOffset;
     FVector detectionEndLocation = detectionStartLocation + selfPawn->GetActorForwardVector() * m_DetectionCapsuleHalfLength * 2;
@@ -209,39 +210,54 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
 
-	if (!(_player->IsPoweredUp()))
-	{
-		if (isPlayer && (!detectionHit.GetActor() || detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE)) {
-			float delta = FVector::Dist(GetPawn()->GetActorLocation(), _actorPos);
-			//UE_LOG(LogTemp, Log, TEXT("%f"), delta);
-			if (delta < 10.0) {
-				isPlayer = false;
-			}
+	if (playerCharacter) {
+	
+		if (!(_player->IsPoweredUp()))
+		{
+			if (isPlayer && (!detectionHit.GetActor() || detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE)) {
+				float delta = FVector::Dist(GetPawn()->GetActorLocation(), _actorPos);
+				//UE_LOG(LogTemp, Log, TEXT("%f"), delta);
+				if (delta < 10.0) {
+					isPlayer = false;
+				}
 
-			if (_player->isDead) {
-				_player->isDead = false;
-				isPlayer = false;
+				if (_player->isDead) {
+					_player->isDead = false;
+					isPlayer = false;
+				}
+			}
+			else if (detectionHit.GetActor()) {
+				_targetActor = detectionHit.GetActor();
+				_actorPos = detectionHit.GetActor()->GetActorLocation();
+				if (detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_PLAYER) {
+					isPlayer = true;
+				}
+			}
+			else {
+				TArray < AActor* > OutActors;
+				UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), OutActors);
+				_targetActor = GetClosestActor(GetPawn(), OutActors, ActorType::COLLECTIBLE);
 			}
 		}
-		else if (detectionHit.GetActor()) {
+		else
+		{
+			TArray < AActor* > OutActors;
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTFleeLocation::StaticClass(), OutActors);
+			_targetActor = GetClosestActor(GetPawn(), OutActors, ActorType::FLEE_LOCATION);
+		}
+	}
+	else {
+
+		if (detectionHit.GetActor()) {
 			_targetActor = detectionHit.GetActor();
 			_actorPos = detectionHit.GetActor()->GetActorLocation();
-			if (detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_PLAYER) {
-				isPlayer = true;
-			}
 		}
 		else {
 			TArray < AActor* > OutActors;
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), OutActors);
 			_targetActor = GetClosestActor(GetPawn(), OutActors, ActorType::COLLECTIBLE);
 		}
-	}
-	else
-	{
-		TArray < AActor* > OutActors;
-	    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTFleeLocation::StaticClass(), OutActors);
-		_targetActor = GetClosestActor(GetPawn(), OutActors, ActorType::FLEE_LOCATION);
-	}
+	}	
 
     //Set behavior based on hit
 
