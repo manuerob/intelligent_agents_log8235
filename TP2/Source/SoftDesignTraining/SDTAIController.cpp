@@ -129,13 +129,13 @@ void ASDTAIController::UpdateJump(float deltaTime) {
 
 void ASDTAIController::GoToSelectedTarget(float deltaTime) {
 	if (AtJumpSegment || InAir) {
+		Landing = false;
 		return;
 	}
 
 	UWorld* const world = GetWorld();
 	APawn* pawn = GetPawn();
 	USDTPathFollowingComponent* pf = static_cast<USDTPathFollowingComponent*>(GetDefaultSubobjectByName(TEXT("PathFollowingComponent")));
-	Landing = false;
 
 	pf->ResetMove();
 	UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(world, pawn->GetActorLocation(), _actorPos);
