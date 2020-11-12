@@ -333,6 +333,7 @@ ASDTAIController::PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerIn
 
 void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>& hits, FHitResult& outDetectionHit)
 {
+    isPlayerDetected = false;
     for (const FHitResult& hit : hits)
     {
         if (UPrimitiveComponent* component = hit.GetComponent())
@@ -341,6 +342,7 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
             {
                 //we can't get more important than the player
                 outDetectionHit = hit;
+                isPlayerDetected = true;
                 return;
             }
             else if(component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
@@ -359,5 +361,28 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
     {
         m_PlayerInteractionBehavior = currentBehavior;
         AIStateInterrupted();
+    }
+}
+
+bool ASDTAIController::IsPlayerDetected() {
+    return isPlayerDetected;
+}
+
+void ASDTAIController::BeginPlay() {
+    Super::BeginPlay();
+    StartBehaviorTree();
+}
+
+void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+    Super::EndPlay(EndPlayReason);
+
+}
+
+void ASDTAIController::StartBehaviorTree() {
+    ASDTBaseAIController* aiBaseCharacter = Cast<ASDTBaseAIController>(GetPawn());
+    if (aiBaseCharacter) {
+        if (aiBaseCharacter->GetBehaviorTree()) {
+            m_behaviorTreeComponent->StartTree(*aiBaseCharacter->GetBehaviorTree());
+        }
     }
 }
