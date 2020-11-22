@@ -368,10 +368,10 @@ bool ASDTAIController::IsPlayerDetected() {
     return isPlayerDetected;
 }
 
-void ASDTAIController::BeginPlay() {
-    Super::BeginPlay();
-    StartBehaviorTree();
-}
+//void ASDTAIController::BeginPlay() {
+//    Super::BeginPlay();
+//    StartBehaviorTree();
+//}
 
 void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     Super::EndPlay(EndPlayReason);
@@ -379,10 +379,10 @@ void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 }
 
 void ASDTAIController::StartBehaviorTree() {
-    ASDTBaseAIController* aiBaseCharacter = Cast<ASDTBaseAIController>(GetPawn());
-    if (aiBaseCharacter) {
-        if (aiBaseCharacter->GetBehaviorTree()) {
-            m_behaviorTreeComponent->StartTree(*aiBaseCharacter->GetBehaviorTree());
-        }
+
+    
+    if (m_aiBehaviorTree) {
+        RunBehaviorTree(m_aiBehaviorTree);
     }
+
 }

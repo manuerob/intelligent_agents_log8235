@@ -46,8 +46,11 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
     bool Landing = false;
 
-    UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }
-    UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }
+    UPROPERTY(EditAnywhere, category = Behavior)
+        UBehaviorTree* m_aiBehaviorTree;
+
+    /*UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }
+    UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }*/
 
 protected:
 
@@ -78,12 +81,12 @@ public:
 
 private:
     // Called when the game starts or when spawned
-    virtual void BeginPlay() override;
+    //virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void UpdatePlayerInteraction(float deltaTime) override;
     virtual void ShowNavigationPath() override;
-    virtual void StartBehaviorTree() override;
+    virtual void StartBehaviorTree();
 
 protected:
     FVector m_JumpTarget;
@@ -91,9 +94,4 @@ protected:
     FTimerHandle m_PlayerInteractionNoLosTimer;
     PlayerInteractionBehavior m_PlayerInteractionBehavior;
     bool isPlayerDetected;
-    UPROPERTY(transient)
-        UBehaviorTreeComponent* m_behaviorTreeComponent;
-
-    UPROPERTY(transient)
-        UBlackboardComponent* m_blackboardComponent;
 };
