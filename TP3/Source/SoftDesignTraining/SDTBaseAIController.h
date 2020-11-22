@@ -21,6 +21,7 @@ public:
     // Called when the game starts or when spawned
     ASDTBaseAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
     virtual void Tick(float deltaTime) override;
+    virtual void UpdatePlayerInteraction(float deltaTime) {};
 
 protected:
     virtual void RotationUpdate(float deltaTime) {};
@@ -29,6 +30,5 @@ protected:
     bool m_ReachedTarget;
 private:
     virtual void GoToBestTarget(float deltaTime) {};
-    virtual void UpdatePlayerInteraction(float deltaTime) {};
     virtual void ShowNavigationPath() {};
 };

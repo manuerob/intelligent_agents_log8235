@@ -49,8 +49,8 @@ public:
     UPROPERTY(EditAnywhere, category = Behavior)
         UBehaviorTree* m_aiBehaviorTree;
 
-    /*UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }
-    UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }*/
+    /*UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }*/
+    //UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }
 
 protected:
 
@@ -66,7 +66,6 @@ protected:
     PlayerInteractionBehavior GetCurrentPlayerInteractionBehavior(const FHitResult& hit);
     bool HasLoSOnHit(const FHitResult& hit);
     void MoveToRandomCollectible();
-    void MoveToPlayer();
     void MoveToBestFleeLocation();
     void PlayerInteractionLoSUpdate();
     void OnPlayerInteractionNoLosDone();
@@ -78,13 +77,14 @@ public:
     void SetActorLocation(const FVector& targetLocation);
     void AIStateInterrupted();
     bool IsPlayerDetected();
+    void MoveToPlayer();
+    virtual void UpdatePlayerInteraction(float deltaTime) override;
 
 private:
     // Called when the game starts or when spawned
     //virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void GoToBestTarget(float deltaTime) override;
-    virtual void UpdatePlayerInteraction(float deltaTime) override;
     virtual void ShowNavigationPath() override;
 
 protected:

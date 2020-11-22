@@ -8,7 +8,6 @@ EBTNodeResult::Type UIsPlayerDetected::ExecuteTask(UBehaviorTreeComponent& Owner
 
 	if (ASDTAIController* aiController = Cast<ASDTAIController>(OwnerComp.GetAIOwner())) {
 
-		UE_LOG(LogTemp, Log, TEXT(":^)"));
 		return aiController->IsPlayerDetected() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 	}
 	return EBTNodeResult::Failed;

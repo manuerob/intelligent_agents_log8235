@@ -333,6 +333,8 @@ ASDTAIController::PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerIn
 
 void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>& hits, FHitResult& outDetectionHit)
 {
+    UE_LOG(LogTemp, Log, TEXT(":>)"));
+
     isPlayerDetected = false;
     for (const FHitResult& hit : hits)
     {
@@ -343,6 +345,7 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
                 //we can't get more important than the player
                 outDetectionHit = hit;
                 isPlayerDetected = true;
+                UE_LOG(LogTemp, Log, TEXT("PLAYER DETECTED"));
                 return;
             }
             else if(component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
