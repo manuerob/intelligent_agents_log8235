@@ -12,6 +12,10 @@
 EBTNodeResult::Type UMoveToTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
 	if (ASDTAIController* aiController = Cast<ASDTAIController>(OwnerComp.GetAIOwner())) {
 
+		uint8 bbKey = aiController->GetBlackBoardComponent()->GetKeyID("TargetPos");
+		FVector targetPosition = aiController->GetBlackBoardComponent()->GetValue<UBlackboardKeyType_Vector>(bbKey);
+
+
 		aiController->MoveToPlayer();
 		return EBTNodeResult::Succeeded;
 	}

@@ -7,6 +7,7 @@
 #include "SDTPathFollowingComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 //#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
@@ -15,6 +16,7 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
 {
     m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
+    m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
@@ -248,6 +250,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
     TArray<TEnumAsByte<EObjectTypeQuery>> detectionTraceObjectTypes;
     detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_PLAYER));
+    detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_COLLECTIBLE));
 
     TArray<FHitResult> allDetectionHits;
     GetWorld()->SweepMultiByObjectType(allDetectionHits, detectionStartLocation, detectionEndLocation, FQuat::Identity, detectionTraceObjectTypes, FCollisionShape::MakeSphere(m_DetectionCapsuleRadius));
@@ -333,24 +336,28 @@ ASDTAIController::PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerIn
 
 void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>& hits, FHitResult& outDetectionHit)
 {
-    UE_LOG(LogTemp, Log, TEXT(":>)"));
-
     isPlayerDetected = false;
+    isCollectibleDetected = false;
     for (const FHitResult& hit : hits)
     {
         if (UPrimitiveComponent* component = hit.GetComponent())
         {
+
             if (component->GetCollisionObjectType() == COLLISION_PLAYER)
             {
                 //we can't get more important than the player
                 outDetectionHit = hit;
+                TargetPos = hit.GetActor()->GetActorLocation();
+                m_blackboardComponent->SetValue<UBlackboardKeyType_Vector>(m_blackboardComponent->GetKeyID("TargetPos"), TargetPos);
                 isPlayerDetected = true;
-                UE_LOG(LogTemp, Log, TEXT("PLAYER DETECTED"));
                 return;
             }
             else if(component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
             {
                 outDetectionHit = hit;
+                isCollectibleDetected = true;
+                TargetPos = hit.GetActor()->GetActorLocation();
+                m_blackboardComponent->SetValue<UBlackboardKeyType_Vector>(m_blackboardComponent->GetKeyID("TargetPos"), TargetPos);
             }
         }
     }
@@ -369,6 +376,10 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
 
 bool ASDTAIController::IsPlayerDetected() {
     return isPlayerDetected;
+}
+
+bool ASDTAIController::IsCollectibleDetected() {
+    return isCollectibleDetected;
 }
 
 void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {

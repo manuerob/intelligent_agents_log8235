@@ -2,7 +2,6 @@
 #include "../SDTAIController.h"
 
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
-#include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 
 EBTNodeResult::Type UIsPlayerDetected::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
 
