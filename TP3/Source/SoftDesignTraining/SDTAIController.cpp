@@ -368,21 +368,7 @@ bool ASDTAIController::IsPlayerDetected() {
     return isPlayerDetected;
 }
 
-//void ASDTAIController::BeginPlay() {
-//    Super::BeginPlay();
-//    StartBehaviorTree();
-//}
-
 void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     Super::EndPlay(EndPlayReason);
-
-}
-
-void ASDTAIController::StartBehaviorTree() {
-
-    
-    if (m_aiBehaviorTree) {
-        RunBehaviorTree(m_aiBehaviorTree);
-    }
 
 }

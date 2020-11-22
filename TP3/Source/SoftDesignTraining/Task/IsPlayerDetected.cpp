@@ -5,7 +5,10 @@
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 
 EBTNodeResult::Type UIsPlayerDetected::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
+
 	if (ASDTAIController* aiController = Cast<ASDTAIController>(OwnerComp.GetAIOwner())) {
+
+		UE_LOG(LogTemp, Log, TEXT(":^)"));
 		return aiController->IsPlayerDetected() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 	}
 	return EBTNodeResult::Failed;
