@@ -65,8 +65,6 @@ protected:
     void UpdatePlayerInteractionBehavior(const FHitResult& detectionHit, float deltaTime);
     PlayerInteractionBehavior GetCurrentPlayerInteractionBehavior(const FHitResult& hit);
     bool HasLoSOnHit(const FHitResult& hit);
-    void MoveToRandomCollectible();
-    void MoveToBestFleeLocation();
     void PlayerInteractionLoSUpdate();
     void OnPlayerInteractionNoLosDone();
     void OnMoveToTarget();
@@ -78,6 +76,8 @@ public:
     void AIStateInterrupted();
     bool IsPlayerDetected();
     void MoveToPlayer();
+    void MoveToRandomCollectible();
+    void MoveToBestFleeLocation();
     virtual void UpdatePlayerInteraction(float deltaTime) override;
 
 private:
