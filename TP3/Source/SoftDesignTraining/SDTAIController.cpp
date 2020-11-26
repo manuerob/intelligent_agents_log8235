@@ -7,7 +7,7 @@
 #include "SDTPathFollowingComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
+#include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
 //#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
@@ -15,7 +15,7 @@
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
 {
-    m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
+    //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
 }
 
@@ -133,7 +133,7 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
     if (!AtJumpSegment)
     {
         AIStateInterrupted();
-        m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
+        //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     }
 }
 
@@ -258,13 +258,19 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
 
-    UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerPoweredUp"), SDTUtils::IsPlayerPoweredUp(GetWorld()));
+
+	if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"))) {
+		UE_LOG(LogTemp, Log, TEXT("%i"), m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen")));
+	}
+
+    //UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
 
     if (GetMoveStatus() == EPathFollowingStatus::Idle)
     {
         m_ReachedTarget = true;
     }
-
+/*
     FString debugString = "";
 
     switch (m_PlayerInteractionBehavior)
@@ -280,7 +286,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
         break;
     }
 
-    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);
+    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);*/
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
 }
@@ -313,54 +319,57 @@ void ASDTAIController::AIStateInterrupted()
 
 ASDTAIController::PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerInteractionBehavior(const FHitResult& hit)
 {
+
     if (m_PlayerInteractionBehavior == PlayerInteractionBehavior_Collect)
     {
-        if (!hit.GetComponent())
-            return PlayerInteractionBehavior_Collect;
+		if (!hit.GetComponent() || hit.GetComponent()->GetCollisionObjectType() != COLLISION_PLAYER || !HasLoSOnHit(hit)) {
+		
+			return PlayerInteractionBehavior_Collect;
+		}
 
-        if (hit.GetComponent()->GetCollisionObjectType() != COLLISION_PLAYER)
-            return PlayerInteractionBehavior_Collect;
+		if (SDTUtils::IsPlayerPoweredUp(GetWorld())) {
+			return PlayerInteractionBehavior_Flee;
+		}
+		else {
+			return PlayerInteractionBehavior_Chase;
+		}
 
-        if (!HasLoSOnHit(hit))
-            return PlayerInteractionBehavior_Collect;
-
-        return SDTUtils::IsPlayerPoweredUp(GetWorld()) ? PlayerInteractionBehavior_Flee : PlayerInteractionBehavior_Chase;
     }
     else
     {
         PlayerInteractionLoSUpdate();
 
-        return SDTUtils::IsPlayerPoweredUp(GetWorld()) ? PlayerInteractionBehavior_Flee : PlayerInteractionBehavior_Chase;
+		if (SDTUtils::IsPlayerPoweredUp(GetWorld())) {
+			return PlayerInteractionBehavior_Flee;
+		}
+		else {
+			return PlayerInteractionBehavior_Chase;
+		}
     }
 }
 
 void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>& hits, FHitResult& outDetectionHit)
 {
-    isPlayerDetected = false;
-    isCollectibleDetected = false;
     for (const FHitResult& hit : hits)
     {
         if (UPrimitiveComponent* component = hit.GetComponent())
         {
-
-            if (component->GetCollisionObjectType() == COLLISION_PLAYER)
-            {
-                //we can't get more important than the player
-                outDetectionHit = hit;
-                TargetPos = hit.GetActor()->GetActorLocation();
-                m_blackboardComponent->SetValue<UBlackboardKeyType_Vector>(m_blackboardComponent->GetKeyID("TargetPos"), TargetPos);
-                isPlayerDetected = true;
-                return;
-            }
-            else if(component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
-            {
-                outDetectionHit = hit;
-                isCollectibleDetected = true;
-                TargetPos = hit.GetActor()->GetActorLocation();
-                m_blackboardComponent->SetValue<UBlackboardKeyType_Vector>(m_blackboardComponent->GetKeyID("TargetPos"), TargetPos);
-            }
+			if (HasLoSOnHit(hit)) {
+				if (component->GetCollisionObjectType() == COLLISION_PLAYER)
+				{
+					//we can't get more important than the player
+					outDetectionHit = hit;
+					m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), true);
+					return;
+				}
+				else if (component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
+				{
+					outDetectionHit = hit;
+				}
+			}
         }
     }
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), false);
 }
 
 void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detectionHit, float deltaTime)
@@ -372,14 +381,6 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
         m_PlayerInteractionBehavior = currentBehavior;
         AIStateInterrupted();
     }
-}
-
-bool ASDTAIController::IsPlayerDetected() {
-    return isPlayerDetected;
-}
-
-bool ASDTAIController::IsCollectibleDetected() {
-    return isCollectibleDetected;
 }
 
 void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {

@@ -46,9 +46,6 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
     bool Landing = false;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
-        FVector TargetPos;
-
     UPROPERTY(EditAnywhere, category = Behavior)
         UBehaviorTree* m_aiBehaviorTree;
 
@@ -68,8 +65,6 @@ protected:
     void UpdatePlayerInteractionBehavior(const FHitResult& detectionHit, float deltaTime);
     PlayerInteractionBehavior GetCurrentPlayerInteractionBehavior(const FHitResult& hit);
     bool HasLoSOnHit(const FHitResult& hit);
-    void MoveToRandomCollectible();
-    void MoveToBestFleeLocation();
     void PlayerInteractionLoSUpdate();
     void OnPlayerInteractionNoLosDone();
     void OnMoveToTarget();
@@ -79,9 +74,9 @@ public:
     void RotateTowards(const FVector& targetLocation);
     void SetActorLocation(const FVector& targetLocation);
     void AIStateInterrupted();
-    bool IsPlayerDetected();
-    bool IsCollectibleDetected();
     void MoveToPlayer();
+	void MoveToRandomCollectible();
+	void MoveToBestFleeLocation();
     virtual void UpdatePlayerInteraction(float deltaTime) override;
 
 private:
@@ -99,6 +94,4 @@ protected:
     FRotator m_ObstacleAvoidanceRotation;
     FTimerHandle m_PlayerInteractionNoLosTimer;
     PlayerInteractionBehavior m_PlayerInteractionBehavior;
-    bool isPlayerDetected;
-    bool isCollectibleDetected;
 };
