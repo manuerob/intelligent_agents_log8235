@@ -23,6 +23,7 @@ void ASDTBaseAIController::Tick(float deltaTime)
     }
     else
     {
+        UE_LOG(LogTemp, Log, TEXT("algeebruh"));
         ShowNavigationPath();
     }
 }
