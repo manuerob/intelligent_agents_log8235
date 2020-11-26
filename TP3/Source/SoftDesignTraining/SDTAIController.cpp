@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SDTAIController.h"
+#include <string>
 #include "SoftDesignTraining.h"
 #include "SDTCollectible.h"
 #include "SDTFleeLocation.h"
@@ -45,6 +46,8 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
 
 void ASDTAIController::MoveToRandomCollectible()
 {
+    double start = FPlatformTime::Seconds();
+
     float closestSqrCollectibleDistance = 18446744073709551610.f;
     ASDTCollectible* closestCollectible = nullptr;
 
@@ -56,6 +59,10 @@ void ASDTAIController::MoveToRandomCollectible()
         int index = FMath::RandRange(0, foundCollectibles.Num() - 1);
 
         ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(foundCollectibles[index]);
+        double end = FPlatformTime::Seconds();
+
+        choiceCollectibleTime_ = FString("choose collect: ") + FString::SanitizeFloat(end - start);
+
         if (!collectibleActor)
             return;
 
@@ -146,6 +153,8 @@ void ASDTAIController::MoveToBestFleeLocation()
     if (!playerCharacter)
         return;
 
+    double start = FPlatformTime::Seconds();
+
     for (TActorIterator<ASDTFleeLocation> actorIterator(GetWorld(), ASDTFleeLocation::StaticClass()); actorIterator; ++actorIterator)
     {
         ASDTFleeLocation* fleeLocation = Cast<ASDTFleeLocation>(*actorIterator);
@@ -171,6 +180,8 @@ void ASDTAIController::MoveToBestFleeLocation()
             DrawDebugString(GetWorld(), FVector(0.f, 0.f, 10.f), FString::SanitizeFloat(locationScore), fleeLocation, FColor::Red, 5.f, false);
         }
     }
+    double end = FPlatformTime::Seconds();
+    choiceFleeLocationTime_ = FString("Flee loc: ") + FString::SanitizeFloat(end - start);
 
     if (bestFleeLocation)
     {
@@ -248,6 +259,8 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FVector detectionStartLocation = selfPawn->GetActorLocation() + selfPawn->GetActorForwardVector() * m_DetectionCapsuleForwardStartingOffset;
     FVector detectionEndLocation = detectionStartLocation + selfPawn->GetActorForwardVector() * m_DetectionCapsuleHalfLength * 2;
 
+    double start = FPlatformTime::Seconds();
+
     TArray<TEnumAsByte<EObjectTypeQuery>> detectionTraceObjectTypes;
     detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_PLAYER));
     detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_COLLECTIBLE));
@@ -257,6 +270,13 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
+
+    double end = FPlatformTime::Seconds();
+    detectPlayerTime_ = FString("Detect p: ") + FString::SanitizeFloat(end-start);
+   
+    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 300.f), detectPlayerTime_, GetPawn(), FColor::Orange, 0.f, false);
+    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 200.f), choiceFleeLocationTime_, GetPawn(), FColor::Orange, 0.f, false);
+    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 100.f), choiceCollectibleTime_, GetPawn(), FColor::Orange, 0.f, false);
 
     UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
 

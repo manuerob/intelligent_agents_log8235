@@ -94,6 +94,10 @@ private:
     UPROPERTY(transient)
         UBlackboardComponent* m_blackboardComponent;
 
+    FString detectPlayerTime_ = "Detect p: N/A";
+    FString choiceFleeLocationTime_ = "Flee loc: N/A";
+    FString choiceCollectibleTime_ = "choose collect: N/A";
+
 protected:
     FVector m_JumpTarget;
     FRotator m_ObstacleAvoidanceRotation;
