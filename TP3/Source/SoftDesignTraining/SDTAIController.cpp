@@ -8,6 +8,7 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
+#include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 //#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
@@ -118,7 +119,8 @@ void ASDTAIController::PlayerInteractionLoSUpdate()
     {
         if (!GetWorld()->GetTimerManager().IsTimerActive(m_PlayerInteractionNoLosTimer))
         {
-            GetWorld()->GetTimerManager().SetTimer(m_PlayerInteractionNoLosTimer, this, &ASDTAIController::OnPlayerInteractionNoLosDone, 3.f, false);
+            GetWorld()->GetTimerManager().SetTimer(m_PlayerInteractionNoLosTimer, this, &ASDTAIController::OnPlayerInteractionNoLosDone, 2.f, false);
+
             DrawDebugString(GetWorld(), FVector(0.f, 0.f, 10.f), "Lost LoS", GetPawn(), FColor::Red, 5.f, false);
         }
     }
@@ -250,7 +252,6 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
     TArray<TEnumAsByte<EObjectTypeQuery>> detectionTraceObjectTypes;
     detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_PLAYER));
-    detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_COLLECTIBLE));
 
     TArray<FHitResult> allDetectionHits;
     GetWorld()->SweepMultiByObjectType(allDetectionHits, detectionStartLocation, detectionEndLocation, FQuat::Identity, detectionTraceObjectTypes, FCollisionShape::MakeSphere(m_DetectionCapsuleRadius));
@@ -260,11 +261,10 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
 	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerPoweredUp"), SDTUtils::IsPlayerPoweredUp(GetWorld()));
 
-	if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"))) {
-		UE_LOG(LogTemp, Log, TEXT("%i"), m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen")));
-	}
+    PlayerInteractionLoSUpdate();
 
     //UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
+    
 
     if (GetMoveStatus() == EPathFollowingStatus::Idle)
     {
@@ -354,18 +354,16 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
     {
         if (UPrimitiveComponent* component = hit.GetComponent())
         {
-			if (HasLoSOnHit(hit)) {
-				if (component->GetCollisionObjectType() == COLLISION_PLAYER)
-				{
-					//we can't get more important than the player
-					outDetectionHit = hit;
-					m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), true);
-					return;
-				}
-				else if (component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
-				{
-					outDetectionHit = hit;
-				}
+			if (component->GetCollisionObjectType() == COLLISION_PLAYER && HasLoSOnHit(hit))
+			{
+				//we can't get more important than the player
+				outDetectionHit = hit;
+                m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), true);
+				return;
+			}
+			else if (component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
+			{
+				outDetectionHit = hit;
 			}
         }
     }
