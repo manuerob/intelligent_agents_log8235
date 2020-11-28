@@ -325,10 +325,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);*/
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
-    
-    if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"))) {
-        DrawDebugSphere(GetWorld(), GetPawn()->GetActorLocation(), 15.f, 8, FColor::Blue, false, 5.f);
-    }
+   
 }
 
 bool ASDTAIController::HasLoSOnHit(const FHitResult& hit)
@@ -455,4 +452,9 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
 void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     Super::EndPlay(EndPlayReason);
 
+}
+
+FVector ASDTAIController::GetPawnLocation()
+{
+	return GetPawn()->GetActorLocation();
 }

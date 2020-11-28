@@ -80,6 +80,7 @@ public:
 	void MoveToCollectible();
 	void MoveToBestFleeLocation();
     virtual void UpdatePlayerInteraction(float deltaTime) override;
+	FVector GetPawnLocation();
 
 	ASDTCollectible* foundCollectible = nullptr;
 
