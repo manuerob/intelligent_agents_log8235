@@ -144,7 +144,7 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
     GetWorld()->GetTimerManager().ClearTimer(m_PlayerInteractionNoLosTimer);
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 10.f), "TIMER DONE", GetPawn(), FColor::Red, 5.f, false);
 
-    if (!AtJumpSegment)
+    if (!AtJumpSegment && !m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup")))
     {
         AIStateInterrupted();
         //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
@@ -294,6 +294,18 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 			foundCollectible = nullptr;
 		}
     }
+
+	ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(playerCharacter);
+
+	if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup")) && !mainCharacter->chaseGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()))) {
+		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"), false);
+	}
+
+	if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen")) && !mainCharacter->activelySeeingGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()))) {
+		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), false);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%i"), mainCharacter->chaseGroup.Num());
 /*
     FString debugString = "";
 
@@ -315,7 +327,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
     
     if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"))) {
-        DrawDebugSphere(GetWorld(), GetPawn()->GetActorLocation(), 2.f, 8, FColor::Blue, false, 5.f);
+        DrawDebugSphere(GetWorld(), GetPawn()->GetActorLocation(), 15.f, 8, FColor::Blue, false, 5.f);
     }
 }
 
@@ -390,8 +402,16 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
                 m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"), true);
 
                 ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
-                mainCharacter->activelySeeingGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
-                mainCharacter->chaseGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+
+				if (!mainCharacter->activelySeeingGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
+				{
+					mainCharacter->activelySeeingGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+				}
+                
+				if (!mainCharacter->chaseGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
+				{
+					mainCharacter->chaseGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+				}
 				
                 return;
 			}
@@ -406,7 +426,11 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
         
         ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
         ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(playerCharacter);
-        mainCharacter->activelySeeingGroup.Remove(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+        
+		if (mainCharacter->activelySeeingGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
+		{
+			mainCharacter->activelySeeingGroup.Remove(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+		}
 
         if (mainCharacter->activelySeeingGroup.Num() == 0) {
             mainCharacter->chaseGroup.Empty();
