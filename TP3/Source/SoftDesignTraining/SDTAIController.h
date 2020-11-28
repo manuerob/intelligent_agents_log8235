@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SDTBaseAIController.h"
+#include "SDTCollectible.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "SDTAIController.generated.h"
@@ -47,7 +48,7 @@ public:
     bool Landing = false;
 
     UPROPERTY(EditAnywhere, category = Behavior)
-        UBehaviorTree* m_aiBehaviorTree;
+    UBehaviorTree* m_aiBehaviorTree;
 
     /*UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }*/
     UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }
@@ -75,9 +76,12 @@ public:
     void SetActorLocation(const FVector& targetLocation);
     void AIStateInterrupted();
     void MoveToPlayer();
-	void MoveToRandomCollectible();
+	void FindRandomCollectible();
+	void MoveToCollectible();
 	void MoveToBestFleeLocation();
     virtual void UpdatePlayerInteraction(float deltaTime) override;
+
+	ASDTCollectible* foundCollectible = nullptr;
 
 private:
     // Called when the game starts or when spawned

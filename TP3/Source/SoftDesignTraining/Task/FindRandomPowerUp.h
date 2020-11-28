@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
-#include "MoveToRandomPowerUp.generated.h"
+#include "FindRandomPowerUp.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SOFTDESIGNTRAINING_API UMoveToRandomPowerUp : public UBTTask_BlackboardBase
+class SOFTDESIGNTRAINING_API UFindRandomPowerUp : public UBTTask_BlackboardBase
 {
 	GENERATED_BODY()
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

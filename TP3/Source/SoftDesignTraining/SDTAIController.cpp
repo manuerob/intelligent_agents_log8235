@@ -2,7 +2,6 @@
 
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
-#include "SDTCollectible.h"
 #include "SDTFleeLocation.h"
 #include "SDTPathFollowingComponent.h"
 #include "DrawDebugHelpers.h"
@@ -26,7 +25,7 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
     {
     case PlayerInteractionBehavior_Collect:
 
-        MoveToRandomCollectible();
+        FindRandomCollectible();
 
         break;
 
@@ -44,7 +43,7 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
     }
 }
 
-void ASDTAIController::MoveToRandomCollectible()
+void ASDTAIController::FindRandomCollectible()
 {
     float closestSqrCollectibleDistance = 18446744073709551610.f;
     ASDTCollectible* closestCollectible = nullptr;
@@ -62,8 +61,8 @@ void ASDTAIController::MoveToRandomCollectible()
 
         if (!collectibleActor->IsOnCooldown())
         {
-            MoveToLocation(foundCollectibles[index]->GetActorLocation(), 0.5f, false, true, true, NULL, false);
-            OnMoveToTarget();
+			foundCollectible = collectibleActor;
+			m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("HasPowerUpLoc"), true);
             return;
         }
         else
@@ -73,8 +72,20 @@ void ASDTAIController::MoveToRandomCollectible()
     }
 }
 
+void ASDTAIController::MoveToCollectible()
+{
+	MoveToLocation(foundCollectible->GetActorLocation(), 0.5f, false, true, true, NULL, false);
+	OnMoveToTarget();
+}
+
 void ASDTAIController::MoveToPlayer()
 {
+	if (foundCollectible != nullptr)
+	{
+		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("HasPowerUpLoc"), false);
+		foundCollectible = nullptr;
+	}
+
     ACharacter * playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
     if (!playerCharacter)
         return;
@@ -141,6 +152,12 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
 
 void ASDTAIController::MoveToBestFleeLocation()
 {
+	if (foundCollectible != nullptr)
+	{
+		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("HasPowerUpLoc"), false);
+		foundCollectible = nullptr;
+	}
+
     float bestLocationScore = 0.f;
     ASDTFleeLocation* bestFleeLocation = nullptr;
 
@@ -269,6 +286,12 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     if (GetMoveStatus() == EPathFollowingStatus::Idle)
     {
         m_ReachedTarget = true;
+
+		if (foundCollectible != nullptr)
+		{
+			m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("HasPowerUpLoc"), false);
+			foundCollectible = nullptr;
+		}
     }
 /*
     FString debugString = "";
