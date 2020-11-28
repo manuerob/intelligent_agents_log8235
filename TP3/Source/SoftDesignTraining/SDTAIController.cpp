@@ -11,6 +11,7 @@
 //#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
+#include <SoftDesignTraining/SoftDesignTrainingMainCharacter.h>
 
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
@@ -382,7 +383,13 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
 				//we can't get more important than the player
 				outDetectionHit = hit;
                 m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), true);
-				return;
+                m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"), true);
+
+                ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
+                mainCharacter->activelySeeingGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+                mainCharacter->chaseGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+				
+                return;
 			}
 			else if (component->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
 			{
@@ -390,6 +397,19 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
 			}
         }
     }
+
+    if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"))) {
+        
+        ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+        ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(playerCharacter);
+        mainCharacter->activelySeeingGroup.Remove(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+
+        if (mainCharacter->activelySeeingGroup.Num() == 0) {
+            mainCharacter->chaseGroup.Empty();
+            m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"), false);
+        }
+    }
+
 	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), false);
 }
 

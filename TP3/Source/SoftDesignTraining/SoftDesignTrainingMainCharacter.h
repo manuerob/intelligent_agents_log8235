@@ -18,6 +18,11 @@ public:
 
     virtual void OnCollectPowerUp() override;
 
+    TArray<ASoftDesignTrainingCharacter*> activelySeeingGroup;
+
+    TArray<ASoftDesignTrainingCharacter*> chaseGroup;
+
+
     bool IsPoweredUp() { return m_IsPoweredUp; }
 
 protected:
