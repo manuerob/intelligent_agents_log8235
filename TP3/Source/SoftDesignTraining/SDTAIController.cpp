@@ -46,11 +46,14 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
 
 void ASDTAIController::FindRandomCollectible()
 {
+
     float closestSqrCollectibleDistance = 18446744073709551610.f;
     ASDTCollectible* closestCollectible = nullptr;
 
     TArray<AActor*> foundCollectibles;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), foundCollectibles);
+
+	//UE_LOG(LogTemp, Log, TEXT(":^)"));
 
     while (foundCollectibles.Num() != 0)
     {
@@ -64,6 +67,12 @@ void ASDTAIController::FindRandomCollectible()
         {
 			foundCollectible = collectibleActor;
 			m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("HasPowerUpLoc"), true);
+			MoveToCollectible();
+
+			m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsFleeing"), false);
+			m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsChasing"), false);
+			m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsCollecting"), true);
+
             return;
         }
         else
@@ -86,6 +95,10 @@ void ASDTAIController::MoveToPlayer()
 		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("HasPowerUpLoc"), false);
 		foundCollectible = nullptr;
 	}
+
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsFleeing"), false);
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsChasing"), true);
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsCollecting"), false);
 
     ACharacter * playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
     if (!playerCharacter)
@@ -153,6 +166,11 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
 
 void ASDTAIController::MoveToBestFleeLocation()
 {
+
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsFleeing"), true);
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsChasing"), false);
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsCollecting"), false);
+
 	if (foundCollectible != nullptr)
 	{
 		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("HasPowerUpLoc"), false);
@@ -254,8 +272,10 @@ void ASDTAIController::ShowNavigationPath()
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
     //finish jump before updating AI state
-    if (AtJumpSegment)
+	if (AtJumpSegment) {
+		UE_LOG(LogTemp, Log, TEXT(":^("))
         return;
+	}
 
     APawn* selfPawn = GetPawn();
     if (!selfPawn)
@@ -277,16 +297,19 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
 
-	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerPoweredUp"), SDTUtils::IsPlayerPoweredUp(GetWorld()));
 
-    PlayerInteractionLoSUpdate();
+    //PlayerInteractionLoSUpdate();
 
-    //UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
-    
+    UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
+
 
     if (GetMoveStatus() == EPathFollowingStatus::Idle)
     {
         m_ReachedTarget = true;
+
+		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsFleeing"), false);
+		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsChasing"), false);
+		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsCollecting"), false);
 
 		if (foundCollectible != nullptr)
 		{
@@ -305,7 +328,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), false);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("%i"), mainCharacter->chaseGroup.Num());
+	//UE_LOG(LogTemp, Log, TEXT("%i"), mainCharacter->chaseGroup.Num());
 /*
     FString debugString = "";
 
@@ -352,6 +375,9 @@ void ASDTAIController::AIStateInterrupted()
 {
     StopMovement();
     m_ReachedTarget = true;
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsFleeing"), false);
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsChasing"), false);
+	m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsCollecting"), false);
 }
 
 ASDTAIController::PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerInteractionBehavior(const FHitResult& hit)
@@ -395,19 +421,25 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
 			{
 				//we can't get more important than the player
 				outDetectionHit = hit;
-                m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), true);
-                m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"), true);
 
-                ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
+				m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerPoweredUp"), SDTUtils::IsPlayerPoweredUp(GetWorld()));
 
-				if (!mainCharacter->activelySeeingGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
-				{
-					mainCharacter->activelySeeingGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
-				}
-                
-				if (!mainCharacter->chaseGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
-				{
-					mainCharacter->chaseGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+				if (!SDTUtils::IsPlayerPoweredUp(GetWorld())) {
+					
+					m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), true);
+					m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"), true);
+
+					ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
+
+					if (!mainCharacter->activelySeeingGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
+					{
+						mainCharacter->activelySeeingGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+					}
+
+					if (!mainCharacter->chaseGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
+					{
+						mainCharacter->chaseGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+					}
 				}
 				
                 return;
