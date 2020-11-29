@@ -18,6 +18,9 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 {
     //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+
+    filter_0 = CreateDefaultSubobject<UNavigationQueryFilter>(TEXT("NavQueryFilter"));
+    filter_1 = CreateDefaultSubobject<UNavigationQueryFilter>(TEXT("NavQueryFilter_1"));
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
@@ -103,6 +106,24 @@ void ASDTAIController::MoveToPlayer()
     ACharacter * playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
     if (!playerCharacter)
         return;
+
+    int filterNumber = static_cast<ASoftDesignTrainingMainCharacter*>(playerCharacter)->chaseGroup.Find(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())) % 4;
+
+    /*switch (filterNumber) {
+    case 0:
+        break;
+    case 1:
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    default:
+    }*/
+
+    TSubclassOf<UNavigationQueryFilter> FilterClass = UNavigationQueryFilter::StaticClass();
+    //UNavigationQueryFilter::GetQueryFilter(GetWorld()->GetNavigationSystem()->GetMainNavData(),
+
 
     MoveToActor(playerCharacter, 0.5f, false, true, true, NULL, false);
     OnMoveToTarget();

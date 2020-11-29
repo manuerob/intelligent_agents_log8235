@@ -50,6 +50,18 @@ public:
     UPROPERTY(EditAnywhere, category = Behavior)
     UBehaviorTree* m_aiBehaviorTree;
 
+    UPROPERTY(EditAnywhere, category = Filter)
+    UNavigationQueryFilter* filter_0;
+
+    UPROPERTY(EditAnywhere, category = Filter)
+    UNavigationQueryFilter* filter_1;
+
+    UPROPERTY(EditAnywhere, category = Filter)
+    UNavigationQueryFilter* filter_2;
+
+    UPROPERTY(EditAnywhere, category = Filter)
+    UNavigationQueryFilter* filter_3;
+
     /*UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }*/
     UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }
 
@@ -93,6 +105,7 @@ private:
 
     UPROPERTY(transient)
         UBlackboardComponent* m_blackboardComponent;
+
 
 protected:
     FVector m_JumpTarget;
