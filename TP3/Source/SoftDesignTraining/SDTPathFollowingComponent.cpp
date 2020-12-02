@@ -30,7 +30,7 @@ void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
 
     if (SDTUtils::HasJumpFlag(SegmentStart))
     {
-        ASDTAIController* controller = Cast<ASDTAIController>(GetOwner());
+		ASDTAIController* controller = Cast<ASDTAIController>(GetOwner());
         if (controller)
         {
             if (controller->InAir)

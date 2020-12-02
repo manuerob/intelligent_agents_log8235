@@ -22,6 +22,9 @@ ASoftDesignTrainingMainCharacter::ASoftDesignTrainingMainCharacter()
     m_TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
     m_TopDownCameraComponent->SetupAttachment(m_CameraBoom, USpringArmComponent::SocketName);
     m_TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm;
+
+    activelySeeingGroup.Init(nullptr, 0);
+    chaseGroup.Init(nullptr, 0);
 }
 
 void ASoftDesignTrainingMainCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

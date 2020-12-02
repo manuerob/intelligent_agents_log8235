@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SDTBaseAIController.h"
+#include "SDTCollectible.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "SDTAIController.generated.h"
@@ -46,11 +47,8 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
     bool Landing = false;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
-        FVector TargetPos;
-
     UPROPERTY(EditAnywhere, category = Behavior)
-        UBehaviorTree* m_aiBehaviorTree;
+    UBehaviorTree* m_aiBehaviorTree;
 
     /*UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }*/
     UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }
@@ -68,8 +66,6 @@ protected:
     void UpdatePlayerInteractionBehavior(const FHitResult& detectionHit, float deltaTime);
     PlayerInteractionBehavior GetCurrentPlayerInteractionBehavior(const FHitResult& hit);
     bool HasLoSOnHit(const FHitResult& hit);
-    void MoveToRandomCollectible();
-    void MoveToBestFleeLocation();
     void PlayerInteractionLoSUpdate();
     void OnPlayerInteractionNoLosDone();
     void OnMoveToTarget();
@@ -79,10 +75,14 @@ public:
     void RotateTowards(const FVector& targetLocation);
     void SetActorLocation(const FVector& targetLocation);
     void AIStateInterrupted();
-    bool IsPlayerDetected();
-    bool IsCollectibleDetected();
     void MoveToPlayer();
+	void FindRandomCollectible();
+	void MoveToCollectible();
+	void MoveToBestFleeLocation();
     virtual void UpdatePlayerInteraction(float deltaTime) override;
+	FVector GetPawnLocation();
+
+	ASDTCollectible* foundCollectible = nullptr;
 
 private:
     // Called when the game starts or when spawned
@@ -103,6 +103,5 @@ protected:
     FRotator m_ObstacleAvoidanceRotation;
     FTimerHandle m_PlayerInteractionNoLosTimer;
     PlayerInteractionBehavior m_PlayerInteractionBehavior;
-    bool isPlayerDetected;
-    bool isCollectibleDetected;
+    bool m_isSeeingCharacter = false;
 };
