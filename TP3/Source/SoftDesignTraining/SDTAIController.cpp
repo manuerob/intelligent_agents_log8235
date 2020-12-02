@@ -46,10 +46,7 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
 
 void ASDTAIController::FindRandomCollectible()
 {
-<<<<<<< HEAD
     double start = FPlatformTime::Seconds();
-=======
->>>>>>> master
 
     float closestSqrCollectibleDistance = 18446744073709551610.f;
     ASDTCollectible* closestCollectible = nullptr;
@@ -283,6 +280,10 @@ void ASDTAIController::ShowNavigationPath()
 
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
+    if (!m_canUpdate) {
+        return;
+    }
+    m_doneUpdate = false;
     //finish jump before updating AI state
 	if (AtJumpSegment) {
 		UE_LOG(LogTemp, Log, TEXT(":^("))
@@ -311,17 +312,14 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
 
-<<<<<<< HEAD
     double end = FPlatformTime::Seconds();
     detectPlayerTime_ = FString("Detect p: ") + FString::SanitizeFloat(end-start);
    
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 300.f), detectPlayerTime_, GetPawn(), FColor::Orange, 0.f, false);
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 200.f), choiceFleeLocationTime_, GetPawn(), FColor::Orange, 0.f, false);
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 100.f), choiceCollectibleTime_, GetPawn(), FColor::Orange, 0.f, false);
-=======
 
     //PlayerInteractionLoSUpdate();
->>>>>>> master
 
     UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
 
@@ -371,7 +369,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);*/
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
-   
+    m_doneUpdate = true;
 }
 
 bool ASDTAIController::HasLoSOnHit(const FHitResult& hit)

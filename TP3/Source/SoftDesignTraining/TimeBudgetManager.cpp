@@ -32,7 +32,12 @@ void TimeBudgetManager::UpdateAgents() {
 	while(current_time < m_timeBudget){
 		//blah blah
 		ASDTBaseAIController curr_agent = m_registeredAgents[m_CurrentIndex];
+		curr_Agent.m_canUpadte = true;
 
+		while (!curr_agent.m_doneUpdate);
+
+		curr_Agent.m_canUpadte = false;
+		curr_agent.m_doneUpdate = false;
 		current_time += FPlatformTime::Seconds();
 		m_CurrentIndex++;
 	}

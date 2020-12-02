@@ -82,7 +82,7 @@ public:
     virtual void UpdatePlayerInteraction(float deltaTime) override;
 	FVector GetPawnLocation();
 
-	ASDTCollectible* foundCollectible = nullptr;
+	ASDTCollectible* foundCollectible = nullptr;;
 
 private:
     // Called when the game starts or when spawned

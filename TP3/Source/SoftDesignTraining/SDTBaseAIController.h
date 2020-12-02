@@ -23,6 +23,9 @@ public:
     virtual void Tick(float deltaTime) override;
     virtual void UpdatePlayerInteraction(float deltaTime) {};
 
+    bool m_canUpdate = false;
+    bool m_doneUpdate = false;
+
 protected:
     virtual void RotationUpdate(float deltaTime) {};
     virtual void ImpulseToDirection(float deltaTime) {};
