@@ -18,9 +18,6 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 {
     //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
-
-    filter_0 = CreateDefaultSubobject<UNavigationQueryFilter>(TEXT("NavQueryFilter"));
-    filter_1 = CreateDefaultSubobject<UNavigationQueryFilter>(TEXT("NavQueryFilter_1"));
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
@@ -124,8 +121,14 @@ void ASDTAIController::MoveToPlayer()
     TSubclassOf<UNavigationQueryFilter> FilterClass = UNavigationQueryFilter::StaticClass();
     //UNavigationQueryFilter::GetQueryFilter(GetWorld()->GetNavigationSystem()->GetMainNavData(),
 
-
-    MoveToActor(playerCharacter, 0.5f, false, true, true, NULL, false);
+	if (queryFilter) {
+		MoveToActor(playerCharacter, 0.5f, false, true, true, queryFilter, false);
+		UE_LOG(LogTemp, Log, TEXT("%i"), nFilter);
+	}
+	else {
+		MoveToActor(playerCharacter, 0.5f, false, true, true, NULL, false);
+	}
+    
     OnMoveToTarget();
 }
 
@@ -460,6 +463,7 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
 					if (!mainCharacter->chaseGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
 					{
 						mainCharacter->chaseGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
+						nFilter = mainCharacter->chaseGroup.Num() % 4;
 					}
 				}
 				
