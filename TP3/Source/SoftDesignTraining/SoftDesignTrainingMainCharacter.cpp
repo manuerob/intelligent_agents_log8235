@@ -33,8 +33,11 @@ void ASoftDesignTrainingMainCharacter::OnBeginOverlap(UPrimitiveComponent* Overl
 
     if (ASoftDesignTrainingCharacter* character = Cast<ASoftDesignTrainingCharacter>(OtherActor))
     {
-        if (!IsPoweredUp())
-            SetActorLocation(m_StartingPosition);
+		if (!IsPoweredUp()) {
+			SetActorLocation(m_StartingPosition);
+			chaseGroup.Empty();
+			activelySeeingGroup.Empty();
+		}
     }
 }
 

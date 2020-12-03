@@ -53,8 +53,6 @@ void ASDTAIController::FindRandomCollectible()
     TArray<AActor*> foundCollectibles;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), foundCollectibles);
 
-	//UE_LOG(LogTemp, Log, TEXT(":^)"));
-
     while (foundCollectibles.Num() != 0)
     {
         int index = FMath::RandRange(0, foundCollectibles.Num() - 1);
@@ -104,26 +102,8 @@ void ASDTAIController::MoveToPlayer()
     if (!playerCharacter)
         return;
 
-    int filterNumber = static_cast<ASoftDesignTrainingMainCharacter*>(playerCharacter)->chaseGroup.Find(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())) % 4;
-
-    /*switch (filterNumber) {
-    case 0:
-        break;
-    case 1:
-        break;
-    case 2:
-        break;
-    case 3:
-        break;
-    default:
-    }*/
-
-    TSubclassOf<UNavigationQueryFilter> FilterClass = UNavigationQueryFilter::StaticClass();
-    //UNavigationQueryFilter::GetQueryFilter(GetWorld()->GetNavigationSystem()->GetMainNavData(),
-
 	if (queryFilter) {
 		MoveToActor(playerCharacter, 0.5f, false, true, true, queryFilter, false);
-		UE_LOG(LogTemp, Log, TEXT("%i"), nFilter);
 	}
 	else {
 		MoveToActor(playerCharacter, 0.5f, false, true, true, NULL, false);
@@ -155,36 +135,19 @@ void ASDTAIController::PlayerInteractionLoSUpdate()
         }
     }
 
-    if (hasLosOnPlayer)
+    if (!hasLosOnPlayer)
     {
-        if (GetWorld()->GetTimerManager().IsTimerActive(m_PlayerInteractionNoLosTimer))
-        {
-            GetWorld()->GetTimerManager().ClearTimer(m_PlayerInteractionNoLosTimer);
-            m_PlayerInteractionNoLosTimer.Invalidate();
-            DrawDebugString(GetWorld(), FVector(0.f, 0.f, 10.f), "Got LoS", GetPawn(), FColor::Red, 5.f, false);
-        }
-    }
-    else
-    {
-        if (!GetWorld()->GetTimerManager().IsTimerActive(m_PlayerInteractionNoLosTimer))
-        {
-            GetWorld()->GetTimerManager().SetTimer(m_PlayerInteractionNoLosTimer, this, &ASDTAIController::OnPlayerInteractionNoLosDone, 2.f, false);
-
-            DrawDebugString(GetWorld(), FVector(0.f, 0.f, 10.f), "Lost LoS", GetPawn(), FColor::Red, 5.f, false);
-        }
+		OnPlayerInteractionNoLosDone();
     }
     
 }
 
 void ASDTAIController::OnPlayerInteractionNoLosDone()
 {
-    GetWorld()->GetTimerManager().ClearTimer(m_PlayerInteractionNoLosTimer);
-    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 10.f), "TIMER DONE", GetPawn(), FColor::Red, 5.f, false);
 
     if (!AtJumpSegment && !m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup")))
     {
         AIStateInterrupted();
-        //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     }
 }
 
@@ -296,10 +259,9 @@ void ASDTAIController::ShowNavigationPath()
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
     //finish jump before updating AI state
-	if (AtJumpSegment) {
-		UE_LOG(LogTemp, Log, TEXT(":^("))
+	if (AtJumpSegment)
         return;
-	}
+
 
     APawn* selfPawn = GetPawn();
     if (!selfPawn)
@@ -351,25 +313,6 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 	if (m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen")) && !mainCharacter->activelySeeingGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()))) {
 		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), false);
 	}
-
-	//UE_LOG(LogTemp, Log, TEXT("%i"), mainCharacter->chaseGroup.Num());
-/*
-    FString debugString = "";
-
-    switch (m_PlayerInteractionBehavior)
-    {
-    case PlayerInteractionBehavior_Chase:
-        debugString = "Chase";
-        break;
-    case PlayerInteractionBehavior_Flee:
-        debugString = "Flee";
-        break;
-    case PlayerInteractionBehavior_Collect:
-        debugString = "Collect";
-        break;
-    }
-
-    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);*/
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
    
@@ -448,12 +391,13 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
 
 				m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerPoweredUp"), SDTUtils::IsPlayerPoweredUp(GetWorld()));
 
+				ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
+				
 				if (!SDTUtils::IsPlayerPoweredUp(GetWorld())) {
 					
 					m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), true);
 					m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup"), true);
 
-					ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(hit.GetActor());
 
 					if (!mainCharacter->activelySeeingGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
 					{
@@ -463,8 +407,12 @@ void ASDTAIController::GetHightestPriorityDetectionHit(const TArray<FHitResult>&
 					if (!mainCharacter->chaseGroup.Contains(static_cast<ASoftDesignTrainingCharacter*>(GetPawn())))
 					{
 						mainCharacter->chaseGroup.Add(static_cast<ASoftDesignTrainingCharacter*>(GetPawn()));
-						nFilter = mainCharacter->chaseGroup.Num() % 4;
+						nFilter = mainCharacter->chaseGroup.Num() % 3;
 					}
+				}
+				else {
+					mainCharacter->activelySeeingGroup.Empty();
+					mainCharacter->chaseGroup.Empty();
 				}
 				
                 return;
