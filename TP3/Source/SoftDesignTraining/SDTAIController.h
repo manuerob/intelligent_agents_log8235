@@ -51,6 +51,12 @@ public:
     UPROPERTY(EditAnywhere, category = Behavior)
     UBehaviorTree* m_aiBehaviorTree;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Filter)
+	int nFilter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Filter)
+	TSubclassOf<UNavigationQueryFilter> queryFilter;
+
     /*UBehaviorTreeComponent* GetBehaviorTreeComponent() const { return m_behaviorTreeComponent; }*/
     UBlackboardComponent* GetBlackBoardComponent() const { return m_blackboardComponent; }
 
