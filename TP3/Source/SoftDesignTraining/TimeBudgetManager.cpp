@@ -27,18 +27,30 @@ void TimeBudgetManager::UnregisterAIAgent(ASDTBaseAIController* aiAgent) {
 	m_registeredAgents.Remove(aiAgent);
 }
 
-void TimeBudgetManager::UpdateAgents() {
-	double current_time = FPlatformTime::Seconds();
-	while(current_time < m_timeBudget){
-		//blah blah
-		ASDTBaseAIController curr_agent = m_registeredAgents[m_CurrentIndex];
-		curr_Agent.m_canUpadte = true;
+void TimeBudgetManager::UpdateTimer(float updateTime, FString pawnName) {
+	m_currentTime += updateTime;
+	UE_LOG(LogTemp, Log, TEXT("CURRENT_TIME (%s): %f"), *pawnName, m_currentTime);
+	m_currentIndex++;
 
-		while (!curr_agent.m_doneUpdate);
+	UE_LOG(LogTemp, Log, TEXT("%i %i"), m_currentIndex, m_registeredAgents.Num());
+	if (m_currentIndex == m_registeredAgents.Num() - 1) {
+		ResetUpdated();
+	}
+}
 
-		curr_Agent.m_canUpadte = false;
-		curr_agent.m_doneUpdate = false;
-		current_time += FPlatformTime::Seconds();
-		m_CurrentIndex++;
+bool TimeBudgetManager::CanUpdate() {
+	return m_currentTime < m_timeBudget;
+}
+
+void TimeBudgetManager::ResetTimer() {
+	UE_LOG(LogTemp, Log, TEXT("RESET TIMER"));
+	m_currentTime = 0.0f;
+}
+
+void TimeBudgetManager::ResetUpdated() {
+	UE_LOG(LogTemp, Log, TEXT("RESET UPDATED"));
+	m_currentIndex = 0;
+	for (int i = 0; i < m_registeredAgents.Num(); ++i) {
+		m_registeredAgents[i]->updated = false;
 	}
 }

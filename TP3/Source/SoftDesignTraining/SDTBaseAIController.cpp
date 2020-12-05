@@ -15,7 +15,13 @@ void ASDTBaseAIController::Tick(float deltaTime)
 {
     Super::Tick(deltaTime);
 
-    UpdatePlayerInteraction(deltaTime);
+    // UE_LOG(LogTemp, Log, TEXT("Tick"));
+
+    // DrawCPUTimes();
+
+    ResetTimer();
+
+    /*UpdatePlayerInteraction(deltaTime);
 
     if (m_ReachedTarget)
     {
@@ -23,8 +29,7 @@ void ASDTBaseAIController::Tick(float deltaTime)
     }
     else
     {
-        UE_LOG(LogTemp, Log, TEXT("algeebruh"));
         ShowNavigationPath();
-    }
+    }*/
 }
 

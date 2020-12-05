@@ -22,9 +22,7 @@ public:
     ASDTBaseAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
     virtual void Tick(float deltaTime) override;
     virtual void UpdatePlayerInteraction(float deltaTime) {};
-
-    bool m_canUpdate = false;
-    bool m_doneUpdate = false;
+    bool updated = false;
 
 protected:
     virtual void RotationUpdate(float deltaTime) {};
@@ -34,4 +32,6 @@ protected:
 private:
     virtual void GoToBestTarget(float deltaTime) {};
     virtual void ShowNavigationPath() {};
+    virtual void DrawCPUTimes() {};
+    virtual void ResetTimer() {};
 };

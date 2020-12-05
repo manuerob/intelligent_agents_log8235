@@ -18,6 +18,7 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 {
     //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+    TimeBudgetManager::GetInstance()->RegisterAIAgent(this);
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
@@ -280,13 +281,23 @@ void ASDTAIController::ShowNavigationPath()
 
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
-    if (!m_canUpdate) {
+    DrawCPUTimes();
+    //UE_LOG(LogTemp, Log, TEXT("%s"), *GetPawn()->GetName());
+
+    double updateStart = FPlatformTime::Seconds();
+
+    if (updated) {
+        UE_LOG(LogTemp, Log, TEXT("CAN'T UPDATE (updated): %s"), *GetPawn()->GetName());
         return;
     }
-    m_doneUpdate = false;
+
+    if (!TimeBudgetManager::GetInstance()->CanUpdate()) {
+        UE_LOG(LogTemp, Log, TEXT("CAN'T UPDATE (time): %s"), *GetPawn()->GetName());
+        return;
+    }
+
     //finish jump before updating AI state
 	if (AtJumpSegment) {
-		UE_LOG(LogTemp, Log, TEXT(":^("))
         return;
 	}
 
@@ -314,10 +325,6 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
     double end = FPlatformTime::Seconds();
     detectPlayerTime_ = FString("Detect p: ") + FString::SanitizeFloat(end-start);
-   
-    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 300.f), detectPlayerTime_, GetPawn(), FColor::Orange, 0.f, false);
-    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 200.f), choiceFleeLocationTime_, GetPawn(), FColor::Orange, 0.f, false);
-    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 100.f), choiceCollectibleTime_, GetPawn(), FColor::Orange, 0.f, false);
 
     //PlayerInteractionLoSUpdate();
 
@@ -369,7 +376,11 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);*/
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
-    m_doneUpdate = true;
+
+    double updateEnd = FPlatformTime::Seconds();
+
+    TimeBudgetManager::GetInstance()->UpdateTimer((updateEnd - updateStart), GetPawn()->GetName());
+    updated = true;
 }
 
 bool ASDTAIController::HasLoSOnHit(const FHitResult& hit)
@@ -510,4 +521,14 @@ void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 FVector ASDTAIController::GetPawnLocation()
 {
 	return GetPawn()->GetActorLocation();
+}
+
+void ASDTAIController::DrawCPUTimes() {
+    DrawDebugString(GetWorld(), FVector(0.f, -800.f, 250.f), detectPlayerTime_, GetPawn(), FColor::Purple, 0.03f, false, 0.85f);
+    DrawDebugString(GetWorld(), FVector(0.f, -800.f, 175.f), choiceFleeLocationTime_, GetPawn(), FColor::Purple, 0.03f, false, 0.85f);
+    DrawDebugString(GetWorld(), FVector(0.f, -800.f, 100.f), choiceCollectibleTime_, GetPawn(), FColor::Purple, 0.03f, false, 0.85f);
+}
+
+void ASDTAIController::ResetTimer() {
+    TimeBudgetManager::GetInstance()->ResetTimer();
 }

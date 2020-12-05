@@ -7,6 +7,7 @@
 #include "SDTCollectible.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "TimeBudgetManager.h"
 #include "SDTAIController.generated.h"
 
 /**
@@ -82,7 +83,7 @@ public:
     virtual void UpdatePlayerInteraction(float deltaTime) override;
 	FVector GetPawnLocation();
 
-	ASDTCollectible* foundCollectible = nullptr;;
+	ASDTCollectible* foundCollectible = nullptr;
 
 private:
     // Called when the game starts or when spawned
@@ -90,6 +91,8 @@ private:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ShowNavigationPath() override;
+    virtual void DrawCPUTimes() override;
+    virtual void ResetTimer() override;
 
     UPROPERTY(transient)
         UBlackboardComponent* m_blackboardComponent;
