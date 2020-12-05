@@ -7,6 +7,7 @@
 #include "SDTCollectible.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "TimeBudgetManager.h"
 #include "SDTAIController.generated.h"
 
 /**
@@ -92,14 +93,19 @@ public:
 
 private:
     // Called when the game starts or when spawned
-    //virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ShowNavigationPath() override;
+    virtual void DrawCPUTimes() override;
+    virtual void ResetTimer() override;
 
     UPROPERTY(transient)
         UBlackboardComponent* m_blackboardComponent;
 
+    FString detectPlayerTime_ = "Detect p: N/A";
+    FString choiceFleeLocationTime_ = "Flee loc: N/A";
+    FString choiceCollectibleTime_ = "choose collect: N/A";
 
 protected:
     FVector m_JumpTarget;

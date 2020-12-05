@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SDTAIController.h"
+#include <string>
 #include "SoftDesignTraining.h"
 #include "SDTFleeLocation.h"
 #include "SDTPathFollowingComponent.h"
@@ -8,7 +9,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Bool.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
-//#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
 #include <SoftDesignTraining/SoftDesignTrainingMainCharacter.h>
@@ -16,8 +16,13 @@
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
 {
-    //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+}
+void ASDTAIController::BeginPlay() {
+    Super::BeginPlay();
+
+    TimeBudgetManager::GetInstance()->RegisterAIAgent(this);
+
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
@@ -46,6 +51,7 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
 
 void ASDTAIController::FindRandomCollectible()
 {
+    double start = FPlatformTime::Seconds();
 
     float closestSqrCollectibleDistance = 18446744073709551610.f;
     ASDTCollectible* closestCollectible = nullptr;
@@ -58,6 +64,10 @@ void ASDTAIController::FindRandomCollectible()
         int index = FMath::RandRange(0, foundCollectibles.Num() - 1);
 
         ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(foundCollectibles[index]);
+        double end = FPlatformTime::Seconds();
+
+        choiceCollectibleTime_ = FString("choose collect: ") + FString::SanitizeFloat(end - start);
+
         if (!collectibleActor)
             return;
 
@@ -171,6 +181,8 @@ void ASDTAIController::MoveToBestFleeLocation()
     if (!playerCharacter)
         return;
 
+    double start = FPlatformTime::Seconds();
+
     for (TActorIterator<ASDTFleeLocation> actorIterator(GetWorld(), ASDTFleeLocation::StaticClass()); actorIterator; ++actorIterator)
     {
         ASDTFleeLocation* fleeLocation = Cast<ASDTFleeLocation>(*actorIterator);
@@ -196,6 +208,8 @@ void ASDTAIController::MoveToBestFleeLocation()
             DrawDebugString(GetWorld(), FVector(0.f, 0.f, 10.f), FString::SanitizeFloat(locationScore), fleeLocation, FColor::Red, 5.f, false);
         }
     }
+    double end = FPlatformTime::Seconds();
+    choiceFleeLocationTime_ = FString("Flee loc: ") + FString::SanitizeFloat(end - start);
 
     if (bestFleeLocation)
     {
@@ -258,6 +272,14 @@ void ASDTAIController::ShowNavigationPath()
 
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
+    DrawCPUTimes();
+
+    double updateStart = FPlatformTime::Seconds();
+
+    if (updated || !TimeBudgetManager::GetInstance()->CanUpdate()) {
+        return;
+    }
+
     //finish jump before updating AI state
 	if (AtJumpSegment)
         return;
@@ -274,6 +296,8 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FVector detectionStartLocation = selfPawn->GetActorLocation() + selfPawn->GetActorForwardVector() * m_DetectionCapsuleForwardStartingOffset;
     FVector detectionEndLocation = detectionStartLocation + selfPawn->GetActorForwardVector() * m_DetectionCapsuleHalfLength * 2;
 
+    double start = FPlatformTime::Seconds();
+
     TArray<TEnumAsByte<EObjectTypeQuery>> detectionTraceObjectTypes;
     detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_PLAYER));
 
@@ -283,8 +307,8 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
 
-
-    //PlayerInteractionLoSUpdate();
+    double end = FPlatformTime::Seconds();
+    detectPlayerTime_ = FString("Detect p: ") + FString::SanitizeFloat(end-start);
 
     UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
 
@@ -315,7 +339,9 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 	}
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
-   
+    double updateEnd = FPlatformTime::Seconds();
+    updated = true;
+    TimeBudgetManager::GetInstance()->UpdateTimer((updateEnd - updateStart), GetPawn()->GetName());
 }
 
 bool ASDTAIController::HasLoSOnHit(const FHitResult& hit)
@@ -456,10 +482,21 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
 
 void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     Super::EndPlay(EndPlayReason);
+    TimeBudgetManager::GetInstance()->Destroy();
 
 }
 
 FVector ASDTAIController::GetPawnLocation()
 {
 	return GetPawn()->GetActorLocation();
+}
+
+void ASDTAIController::DrawCPUTimes() {
+    DrawDebugString(GetWorld(), FVector(0.f, -800.f, 250.f), detectPlayerTime_, GetPawn(), FColor::Purple, 0.03f, false, 0.85f);
+    DrawDebugString(GetWorld(), FVector(0.f, -800.f, 175.f), choiceFleeLocationTime_, GetPawn(), FColor::Purple, 0.03f, false, 0.85f);
+    DrawDebugString(GetWorld(), FVector(0.f, -800.f, 100.f), choiceCollectibleTime_, GetPawn(), FColor::Purple, 0.03f, false, 0.85f);
+}
+
+void ASDTAIController::ResetTimer() {
+    TimeBudgetManager::GetInstance()->ResetTimer();
 }
