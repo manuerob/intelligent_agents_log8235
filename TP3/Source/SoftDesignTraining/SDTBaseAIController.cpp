@@ -15,21 +15,6 @@ void ASDTBaseAIController::Tick(float deltaTime)
 {
     Super::Tick(deltaTime);
 
-    // UE_LOG(LogTemp, Log, TEXT("Tick"));
-
-    // DrawCPUTimes();
-
     ResetTimer();
-
-    /*UpdatePlayerInteraction(deltaTime);
-
-    if (m_ReachedTarget)
-    {
-        GoToBestTarget(deltaTime);
-    }
-    else
-    {
-        ShowNavigationPath();
-    }*/
 }
 

@@ -16,9 +16,13 @@
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
 {
-    //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+}
+void ASDTAIController::BeginPlay() {
+    Super::BeginPlay();
+
     TimeBudgetManager::GetInstance()->RegisterAIAgent(this);
+
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
@@ -55,7 +59,6 @@ void ASDTAIController::FindRandomCollectible()
     TArray<AActor*> foundCollectibles;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), foundCollectibles);
 
-	//UE_LOG(LogTemp, Log, TEXT(":^)"));
 
     while (foundCollectibles.Num() != 0)
     {
@@ -166,7 +169,6 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
     if (!AtJumpSegment && !m_blackboardComponent->GetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsInChaseGroup")))
     {
         AIStateInterrupted();
-        //m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
     }
 }
 
@@ -282,17 +284,10 @@ void ASDTAIController::ShowNavigationPath()
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
     DrawCPUTimes();
-    //UE_LOG(LogTemp, Log, TEXT("%s"), *GetPawn()->GetName());
 
     double updateStart = FPlatformTime::Seconds();
 
-    if (updated) {
-        UE_LOG(LogTemp, Log, TEXT("CAN'T UPDATE (updated): %s"), *GetPawn()->GetName());
-        return;
-    }
-
-    if (!TimeBudgetManager::GetInstance()->CanUpdate()) {
-        UE_LOG(LogTemp, Log, TEXT("CAN'T UPDATE (time): %s"), *GetPawn()->GetName());
+    if (updated || !TimeBudgetManager::GetInstance()->CanUpdate()) {
         return;
     }
 
@@ -326,8 +321,6 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     double end = FPlatformTime::Seconds();
     detectPlayerTime_ = FString("Detect p: ") + FString::SanitizeFloat(end-start);
 
-    //PlayerInteractionLoSUpdate();
-
     UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
 
 
@@ -356,31 +349,12 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 		m_blackboardComponent->SetValue<UBlackboardKeyType_Bool>(m_blackboardComponent->GetKeyID("IsPlayerSeen"), false);
 	}
 
-	//UE_LOG(LogTemp, Log, TEXT("%i"), mainCharacter->chaseGroup.Num());
-/*
-    FString debugString = "";
-
-    switch (m_PlayerInteractionBehavior)
-    {
-    case PlayerInteractionBehavior_Chase:
-        debugString = "Chase";
-        break;
-    case PlayerInteractionBehavior_Flee:
-        debugString = "Flee";
-        break;
-    case PlayerInteractionBehavior_Collect:
-        debugString = "Collect";
-        break;
-    }
-
-    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);*/
-
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
 
     double updateEnd = FPlatformTime::Seconds();
 
-    TimeBudgetManager::GetInstance()->UpdateTimer((updateEnd - updateStart), GetPawn()->GetName());
     updated = true;
+    TimeBudgetManager::GetInstance()->UpdateTimer((updateEnd - updateStart), GetPawn()->GetName());
 }
 
 bool ASDTAIController::HasLoSOnHit(const FHitResult& hit)
@@ -515,6 +489,7 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
 
 void ASDTAIController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     Super::EndPlay(EndPlayReason);
+    TimeBudgetManager::GetInstance()->Destroy();
 
 }
 
